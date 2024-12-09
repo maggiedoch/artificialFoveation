@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T's and L's Task</title>
+    <link rel="stylesheet" href="postErrorExperiment.css">
+</head>
+<body>
+    <h1>T's and L's Task</h1>
+    <button id="start-btn">Start Task</button>
+
+    <!-- Container for stimuli-->
+    <div id="box-container">
+        <canvas id="stimuli-canvas" width="500" height="500"></canvas>
+        <canvas id="foveation-mask" width="500" height="500" style="pointer-events: none;"></canvas>
+    </div>
+    <div id="cursor-position"></div>
+    <div id="feedback-box" style="margin-top: 20px; font-size: 18px; color:black;"></div>
+    <script src="postErrorExperiment.js"></script>
+</body>
+</html>
