@@ -19,6 +19,8 @@ const maskCtx = maskCanvas.getContext("2d");
 maskCanvas.width = `${boxContainer.offsetWidth}px`;
 maskCanvas.height = `${boxContainer.offsetHeight}px`;
 
+let stimulusCoordinates = [];
+
 // ==============================
 // Feedback and Event Listeners
 // ==============================
@@ -112,12 +114,8 @@ function clearDisplay() {
     if (existingMask) {
         existingMask.remove();
     }
-
-    // Ensure the foveation mask is created and added to DOM before drawing
-    // const foveationMask = document.createElement("canvas");
-    // foveationMask.id = "foveation-mask";
-    // document.body.appendChild(foveationMask);  // Or append to a specific container
-
+    stimulusCoordinates = [];
+    
     // Clear the cursor canvas but ensure the cursor ring continues to update
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
@@ -167,6 +165,7 @@ function createStimulus(x, y, itemSize, isTarget) {
     item.style.top = `${y}px`;
     item.style.width = `${itemSize}px`;
     item.style.height = `${itemSize}px`;
+    stimulusCoordinates.push({ x, y, itemSize});
 
     // Assign content and rotation
     item.textContent = isTarget ? "T" : "L";
@@ -240,27 +239,23 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function drawFoveationMask(cursorX, cursorY) {
-    // Check if the mask actually exists before drawing
-    // if (!maskCanvas) {
-        // console.error("Foveation mask element not found in the DOM");
-        // return;
-    // }
-
-    // Ensure the mask has a valid context or properties for further drawing
-   // if (!maskCtx) {
-        // console.error("Failed to get context for the foveation mask.");
-        // return;
-    // }
-    
+    // Global mask layer
     maskCtx.clearRect(0, 0, boxContainer.offsetWidth, boxContainer.offsetHeight); // Clear previous mask
-
-    // Set the color and opacity for the mask
-    maskCtx.fillStyle = "#b7b7b7";  // Light gray color for the mask
-    maskCtx.globalAlpha = 0.9725;  // Set opacity
+    maskCtx.fillStyle = "#b7b7b7";  
+    maskCtx.globalAlpha = 1.0;
     maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);  // Fill the entire canvas with mask color
 
-    eraseFoveation(cursorX, cursorY, maskCtx);
+    // Local mask layer
+    maskCtx.fillStyle = "#000000";
+    maskCtx.font = "14px Arial";
+    maskCtx.textAlign = "center";
+    maskCtx.textBaseline = "middle";
+    stimulusCoordinates.forEach(({ x, y, itemSize}
+        const centerX = x + itemSize / 2;
+        const centerY = y + itemSize / 2;
+    });
 
+    eraseFoveation(cursorX, cursorY, maskCtx);
     maskCtx.restore();
 }
 
