@@ -21,6 +21,7 @@ body {
     height: 500px; /* Set a fixed box height */
     border: 2px solid #000000; /* Add a border */
     overflow: hidden; /* Prevent overflow if items exceed box size */
+    cursor: none;
 }
 
 .stimulus {
@@ -36,7 +37,7 @@ body {
     align-items: center;
     font-size: 24px;
     color: black;
-    cursor: pointer;
+    cursor: none;
     z-index = 1;
 }
 
@@ -52,7 +53,7 @@ body {
     /* border: 1px solid #ffffff; */
     outline: none;
     user-select: none;
-    cursor: pointer;
+    cursor: none;
     transition: background-color 0.3s;
     z-index: 1;
 }
