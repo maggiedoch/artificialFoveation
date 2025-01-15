@@ -1,4 +1,4 @@
-- 12.11.2024
+– 01.14.2025
 
 This code is for a project with the GW Viscog Lab using a T's and L's search task with a foveation mask.
 
@@ -18,4 +18,4 @@ My next steps will be:
 
 (4) Maybe making the L's offset a bit to vary distractor similarity to target?, and
 
-(5) Switch from global mask to local masks over each stimulus
+(5) Debugging some feedback errors
