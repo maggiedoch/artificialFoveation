@@ -1,4 +1,4 @@
-– 01.14.2025
+~ 01.14.2025
 
 This code is for a project with the GW Viscog Lab using a T's and L's search task with a foveation mask.
 
