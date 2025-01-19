@@ -10,12 +10,10 @@ When you see a T, click on it. If you don't see any T's, press the spacebar.
 
 My next steps will be: 
 
-(1) Adding instructions for reporting targets and no-target trials, 
+(1) Adding participant instructions for reporting targets and no-target trials, 
 
 (2) Requiring participants to center cursor between trials, 
 
 (3) Set a min. time between trials (Spamming the spacebar kinda breaks everything), 
 
-(4) Maybe making the L's offset a bit to vary distractor similarity to target?, and
-
-(5) Debugging some feedback errors
+(4) Maybe making the L's offset a bit to vary distractor similarity to target?
