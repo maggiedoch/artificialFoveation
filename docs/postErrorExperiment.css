@@ -38,7 +38,8 @@ body {
     font-size: 24px;
     color: black;
     cursor: none;
-    z-index = 1;
+    z-index: 1;
+    pointer-events: auto;
 }
 
 
@@ -67,13 +68,13 @@ body {
 
 #feedback-box {
     margin-top: 20px;
-    font-size: 18px; /* Font size for feedback */
-    color: black; /* Default color (can be overridden by JavaScript) */
+    font-size: 18px; 
+    color: black; 
     padding: 10px; /* Padding for better spacing */
-    border: 1px solid #ccc; /* Optional: add a border for visibility */
-    border-radius: 5px; /* Optional: rounded corners */
-    background-color: #f9f9f9; /* Optional: light background color */
-    display: none; /* Make sure it only appears after click */
+    border: 1px solid #ccc; 
+    border-radius: 5px; 
+    background-color: #f9f9f9; 
+    display: none; 
 }
 
 #foveation-mask {
