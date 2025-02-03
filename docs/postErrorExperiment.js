@@ -27,6 +27,7 @@ let trialCounter = 0;
 let logCounter = 0;
 let trialCorrect = false;
 let previousTrialCorrect = null;
+let experimentStartTime = null;
 let trialStartTime = [];
 let stimulusCoordinates = [];
 
@@ -45,12 +46,14 @@ function logTrialData() {
     const setSize = currentTrial.setSize;
     const totalSearchTime = trialEndTime - trialStartTime;
     const hitCount = currentTrial.stimuli.filter(
-        stim => stim.clickCount > 0 && stim.targetCond === 1).length;
+        stim => stim.clickCount > 0 && stim.isTarget).length;
     const faCount = currentTrial.stimuli.filter(
-        stim => stim.clickCount > 0 && stim.targetCond !== 1).length;
+        stim => stim.clickCount > 0 && !stim.isTarget).length;
     const missCount = currentTrial.stimuli.filter(
-        stim => stim.clickCount === 0 && stim.targetCond === 1).length;
-    
+        stim => stim.clickCount === 0 && stim.isTarget && 
+        !trialCorrect).length;
+    const correctRejectionCount = (trialCorrect &&
+        currentTrial.stimuli.every(stim => stim.clickCount === 0)) ? 1 : 0;
     const allClicks = clickedLocations.map((click, index) => {
         return {
             x: click.x,
@@ -60,15 +63,16 @@ function logTrialData() {
             clickCount: click.clickCount,
             stimIndex: click.stimIndex,
             targetCond: click.targetCond,
-            rotation: click.rotation
         };
     });
 
     const stimuliJSON = JSON.stringify(currentTrial.stimuli);
     const allClicksJSON = JSON.stringify(allClicks);
     const mouseTrajectoryJSON = JSON.stringify(mouseTrajectory || []);
+    const stimuliDwellTimeJSON = JSON.stringify(stimuliDwellTime);
 
     const trialData = {
+        experimentStartTime,
         logCounter,
         trialID,
         trialType,
@@ -76,12 +80,14 @@ function logTrialData() {
         totalSearchTime,
         hitCount,
         faCount,
+        correctRejectionCount,
         missCount,
         trialCorrect,
         previousTrialCorrect,
         stimuli: stimuliJSON,
         allClicks: allClicksJSON,
-        mouseTrajectory: mouseTrajectoryJSON
+        mouseTrajectory: mouseTrajectoryJSON,
+        stimuliDwellTime: stimuliDwellTimeJSON
     };
 
     console.log("Trial Data:", trialData);
@@ -96,43 +102,50 @@ startBtn.addEventListener("click", startTask);
 boxContainer.addEventListener("mousemove", updateCursorPosition);
 window.addEventListener("keydown", handleSpacebarPress);
 
-function handleClick(_, event) {
-    console.log("Current trial at handleClick:", currentTrial);
-
-    const rect = boxContainer.getBoundingClientRect();
-    const clickX = event.clientX - rect.left;
-    const clickY = event.clientY - rect.top;
-    console.log("Click coordinates:", 
-        { clickX, clickY });
-
-    if (!currentTrial.stimuli || currentTrial.stimuli.length === 0) {
-        console.error("Stimuli array is not initialized or empty");
+function handleClick(event) {
+    if (!event || typeof event.clientX === "undefined" || 
+        typeof event.clientY === "undefined") {
+        console.error("handleClick was triggered without a valid event object!");
         return;
     }
 
-    const tolerance = 30;
+    const rect = boxContainer.getBoundingClientRect();
+    if (!rect) {
+        console.error("Could not retrieve bounding rect for boxContainer");
+        return;
+    }
 
-    const stimIndex = currentTrial.stimuli.findIndex((stim, index) => {
-        const halfSize = stim.itemSize / 2;
-        const stimLeft = stim.x - halfSize;
-        const stimRight = stim.x + halfSize;
-        const stimTop = stim.y - halfSize;
-        const stimBottom = stim.y + halfSize;
-        const inBounds = (
-            clickX >= stimLeft - tolerance && clickX <= stimRight + tolerance && 
-            clickY >= stimTop - tolerance && clickY <= stimBottom + tolerance);
-        console.log(`Stimulus ${index} bounds vs. click:`, {
-            stimLeft,
-            stimRight,
-            stimTop,
-            stimBottom,
-            clickX,
-            clickY,
-            inBounds
-        });
-        return inBounds;
-    });
+    const clickedElement = event.target;
+    // console.log("Clicked element:", clickedElement);
+    if (!clickedElement.dataset.stimIndex) {
+        console.error("Clicked element has no stimIndex dataset attribute!");
+        return;
+    }
 
+    let stimIndex = parseInt(clickedElement.dataset.stimIndex, 10);
+    // console.log("Retrieved stimIndex:", stimIndex);
+    // console.log("StimIndex type:", typeof stimIndex, "Value:", stimIndex);
+
+    // Validate stimIndex before using it
+    if (isNaN(stimIndex) || stimIndex < 0 || 
+    stimIndex >= currentTrial.stimuli.length) {
+        console.error("Invalid stimIndex:", stimIndex);
+        trialCorrect = false;
+        showFeedback(false);
+        endTrial();
+        return;
+    }
+    
+    const clickX = event.clientX - rect.left;
+    const clickY = event.clientY - rect.top;
+    if (isNaN(clickX) || isNaN(clickY)) {
+        console.error("Click coordinates could not be determined!",
+            { clickX, clickY });
+    }
+    // console.log("Click coordinates:", { clickX, clickY });
+
+
+    // Handle case where click doesn't match a stimulus
     if (stimIndex === -1) {
         console.log("Click did not match any stimulus!", { clickX, clickY });
         trialCorrect = false;
@@ -141,7 +154,12 @@ function handleClick(_, event) {
         return;
     }
 
+    // Retrieve correct stimulus object
+    // console.log("Attempting to retreive stimIndex:", stimIndex, 
+        // "from stimuli array:", currentTrial.stimuli);
     const clickedStimulus = currentTrial.stimuli[stimIndex];
+    // console.log("Retrieved clickedStimulus:", clickedStimulus);
+
     if (!clickedStimulus) {
         console.error("clickedStimulus is null or undefined!");
         trialCorrect = false;
@@ -150,10 +168,24 @@ function handleClick(_, event) {
         return;
     }
 
-    console.log("Clicked stimulus found, stimulus #", stimIndex, ":", 
-        clickedStimulus);
+    clickedStimulus.clickCount += 1;
+
+    clickedLocations.push({
+        x: clickX,
+        y: clickY,
+        correct: clickedStimulus.isTarget,
+        time: Date.now(),
+        clickCount: clickedStimulus.clickCount, 
+        stimIndex,
+        targetCond: clickedStimulus.isTarget ? 1 : 0,
+    });
+
+    // console.log("isTarget value at click:", 
+        // clickedStimulus ? clickedStimulus.isTarget : "No stimulus found");
+    
     trialCorrect = clickedStimulus.isTarget;
-    console.log("Trial correct based on click:", trialCorrect);
+    // console.log("Trial correct based on click:", trialCorrect);
+
     showFeedback(trialCorrect);
     endTrial();
 }
@@ -168,8 +200,8 @@ function handleSpacebarPress(event) {
             trialCorrect = false;
         }
 
-        console.log("Spacebar pressed. isTargetPresent:", isTargetPresent,
-            "trialCorrect:", trialCorrect);
+        // console.log("Spacebar pressed. isTargetPresent:", isTargetPresent,
+            // "trialCorrect:", trialCorrect);
         showFeedback(trialCorrect);
         endTrial();
     }
@@ -184,7 +216,7 @@ function showFeedback(isCorrect) {
         feedbackBox.textContent = "Incorrect!";
         feedbackBox.style.color = "red";
     }
-    console.log("Feedback displayed:", isCorrect ? "Correct" : "Incorrect");
+    // console.log("Feedback displayed:", isCorrect ? "Correct" : "Incorrect");
 }
 
 // ======================
@@ -194,15 +226,20 @@ function showFeedback(isCorrect) {
 function startTask() {
     clickedLocations = [];
     mouseTrajectory = [];
+    if (experimentStartTime === null) {
+        experimentStartTime = Date.now();
+        console.log("Experiment start time:", experimentStartTime);
+    }
     trialStartTime = Date.now();
-    console.log("Trial start time:", trialStartTime);
+    console.log("Trial #", logCounter, "start time:", trialStartTime);
     currentTrial = {
         trialID: generateTrialID(),
         trialType: Math.random() < 0.5 ? "targetPresent" : "targetAbsent",
         stimuli: [],
     };
-    console.log("Trial type for trial #", logCounter, ":", 
-        currentTrial.trialType);
+    currentTrial.stimuli.forEach(stim => stim.clickCount = 0);
+    // console.log("Trial type for trial #", logCounter, ":", 
+        // currentTrial.trialType);
     startBtn.style.display = "none";
     clearDisplay();
 
@@ -219,12 +256,12 @@ function startTask() {
     maskCanvas.height = boxContainer.offsetHeight;
 
     // Log container dimensions for debugging
-    console.log("boxContainer dimensions:", {
-        width: boxContainer.clientWidth,
-        height: boxContainer.clientHeight,
-        offsetLeft: boxContainer.offsetLeft,
-        offsetTop: boxContainer.offsetTop
-    });
+    // console.log("boxContainer dimensions:", {
+        // width: boxContainer.clientWidth,
+        // height: boxContainer.clientHeight,
+        // offsetLeft: boxContainer.offsetLeft,
+        // offsetTop: boxContainer.offsetTop
+    // });
 
     // Initialize the foveation mask position
     drawFoveationMask(cursorX, cursorY);
@@ -232,7 +269,7 @@ function startTask() {
     isTargetPresent = currentTrial.trialType === "targetPresent";
     const targetPosition = isTargetPresent ? Math.floor(
         Math.random() * numItems) : -1;
-    console.log("Target Position:", targetPosition);
+    // console.log("Target Position:", targetPosition);
     // Render stimuli and save details to currentTrial
     currentTrial.stimuli = renderStimuli(targetPosition, isTargetPresent);
 
@@ -261,11 +298,31 @@ function clearDisplay() {
 
 function endTrial() {
     trialEndTime = Date.now();
+
+    // Ensure last dwell time is logged before ending trial
+    if (lastHoveredStimIndex !== null & entryTime !== null) {
+        exitTime = Date.now();
+        dwellDuration = exitTime - entryTime;
+
+        if (dwellDuration >= 0) {
+            stimuliDwellTime.push({
+                stimIndex: lastHoveredStimIndex,
+                entryTime: entryTime,
+                exitTime: exitTime,
+                totalDwellTime: dwellDuration,
+            });
+            console.log(`Final dwell time logged for stimulus 
+                ${lastHoveredStimIndex}: ${dwellDuration} ms`);
+        }
+    }
+    // Reset dwell time tracking variables
+    lastHoveredStimIndex = null;
+    entryTime = null;
+
     logCounter++;
     const trialData = logTrialData();
     spacePress = false;
     previousTrialCorrect = trialCorrect;
-    logTrialData();
     setTimeout(startTask, 1000);
 }
 
@@ -327,8 +384,12 @@ function renderStimuli(targetPosition, isTargetPresent) {
     const possibleItemCounts = [1, 2, 4, 8, 12];
     numItems = possibleItemCounts[Math.floor(Math.random() * 
         possibleItemCounts.length)];
-    targetPosition = Math.floor(Math.random() * numItems); 
-    console.log("Target Position at start of trial:", targetPosition);
+    if (isTargetPresent) {
+        targetPosition = Math.floor(Math.random() * numItems);
+    }  else {
+        targetPosition = -1;}
+    // console.log("Target Position at start of trial:", targetPosition);
+    
     const itemSize = 60; 
     const minDistance = itemSize + 10;
     const positions = [];
@@ -344,6 +405,7 @@ function renderStimuli(targetPosition, isTargetPresent) {
         boxContainer.appendChild(item);
 
         currentTrial.stimuli.push({
+            stimIndex,
             x,
             y,
             itemSize,
@@ -351,22 +413,19 @@ function renderStimuli(targetPosition, isTargetPresent) {
             clickCount: 0,
         });
 
-        console.log(`Stimulus ${stimIndex} added:`, {
-            index: stimIndex,
-            x,
-            y,
-            isTarget,
-            targetPosition,
-            isTargetPresent,
-        });
-        item.addEventListener("click", (event) => handleClick(
-            isTarget, event));
+        // console.log(`Stimulus ${stimIndex} setup:`, {
+            // index: stimIndex,
+            // assignedAsTarget: isTarget,
+            // targetPosition,
+            // isTargetPresent
+        // });
+
+        item.dataset.stimIndex = stimIndex; // Store index in HTML element
+        item.addEventListener("click", handleClick);
     }
 
-    console.log("Current trial stimuli after generation:", 
-        currentTrial.stimuli);
-        console.log("Target Position in currentTrial.stimuli:", 
-            currentTrial.stimuli.findIndex(stim => stim.isTarget));
+    // console.log("Final stimuli list after renderStimuli():",
+        // JSON.stringify(currentTrial.stimuli, null, 2));
     drawFoveationMask(cursorX, cursorY);
     // cursorRing(cursorX, cursorY);
     return currentTrial.stimuli;
@@ -378,17 +437,27 @@ function renderStimuli(targetPosition, isTargetPresent) {
 
 let cursorX = 0;
 let cursorY = 0;
+let lastHoveredStimIndex = null;
+let currentTime = Date.now();
+let entryTime = null;
+let exitTime = null;
+let dwellDuration = null; 
+    // Confusing name, but it gets used to calculate stimuliDwellTime
+let stimuliDwellTime = [];
+const tolerance = 30;
 
 function updateCursorPosition(event) {
     const rect = boxContainer.getBoundingClientRect();
-    cursorX = event.clientX - rect.left; // X coordinate relative to boxContainer
-    cursorY = event.clientY - rect.top;  // Y coordinate relative to boxContainer
+    cursorX = event.clientX - rect.left; // relative to boxContainer
+    cursorY = event.clientY - rect.top;  // relative to boxContainer
 
     mouseTrajectory.push({
         x: cursorX,
         y: cursorY,
-        time: Date.now() - trialStartTime,
+        time: Date.now(),
     });
+
+    trackDwellTime(cursorX, cursorY, currentTime);
 
     // Clear the canvas to remove the previous ring
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -405,9 +474,85 @@ function cursorRing(cursorX, cursorY) {
     ctx.stroke();
 }
 
+function trackDwellTime(cursorX, cursorY, currentTime) {
+    if (!currentTrial.stimuli || currentTrial.stimuli.length === 0) return;
+
+    // Find stimulus within cursor
+    const hoveredStimIndex = currentTrial.stimuli.findIndex((stim) => {
+        const halfSize = stim.itemSize / 2;
+        const stimLeft = stim.x - halfSize;
+        const stimRight = stim.x + halfSize;
+        const stimTop = stim.y - halfSize;
+        const stimBottom = stim.y + halfSize;
+
+        return (
+            cursorX >= stimLeft - tolerance &&
+            cursorX <= stimRight + tolerance &&
+            cursorY >= stimTop - tolerance &&
+            cursorY <= stimBottom + tolerance
+        );
+    });
+
+    // If cursor is outside all stimuli
+    if (hoveredStimIndex === -1) {
+        if (lastHoveredStimIndex !== null && entryTime !== null) {
+            // Log dwell time for the last hovered stimulus
+            exitTime = Date.now();
+            dwellDuration = exitTime - entryTime;
+            
+            if (dwellDuration >= 0) {
+                stimuliDwellTime.push({
+                    stimIndex: lastHoveredStimIndex,
+                    entryTime: entryTime,
+                    exitTime: exitTime,
+                    totalDwellTime: dwellDuration,
+                });
+                console.log(`Dwell time logged for stimulus ${lastHoveredStimIndex}:
+                    ${dwellDuration} ms`);
+            } else {
+                console.warn(`Skipping negative dwell time for stim 
+                    ${lastHoveredStimIndex}`, {
+                        entryTime,
+                        exitTime,
+                        dwellDuration
+                    });
+            }
+        }
+        lastHoveredStimIndex = null;
+        entryTime = null;
+        return;
+    }
+
+    // If cursor enters a new stimulus
+    if (hoveredStimIndex !== lastHoveredStimIndex) {
+        // Log the previous dwell entry before switching stimuli
+        if (lastHoveredStimIndex !== null & entryTime !== null) {
+            exitTime = Date.now();
+            dwellDuration = exitTime - entryTime;
+
+            if (dwellDuration >= 0) { // Ensure no negative dwell times
+                stimuliDwellTime.push({
+                    stimIndex: lastHoveredStimIndex,
+                    entryTime: entryTime,
+                    exitTime: exitTime,
+                    totalDwellTime: dwellDuration,
+            });
+            console.log(`Dwell time logged for stimulus ${lastHoveredStimIndex}
+                ${dwellDuration} ms`);
+        } 
+    }
+    // Start a new dwell entry
+    lastHoveredStimIndex = hoveredStimIndex;
+    entryTime = Date.now();
+    // console.log(`Started dwell time tracking for stimulus ${hoveredStimIndex}`);
+}
+}
+
 // =================
 // Foveation Mask
 // =================
+
+// I honestly don't remember what this one does
 document.addEventListener('DOMContentLoaded', function() {
     drawFoveationMask(cursorX, cursorY);
 });
@@ -428,7 +573,7 @@ function drawFoveationMask(cursorX, cursorY) {
     stimulusCoordinates.forEach(({ x, y, itemSize}) => {
         const centerX = x + itemSize / 2;
         const centerY = y + itemSize / 2;
-        maskCtx.fillText("*", centerX, centerY);
+        maskCtx.fillText("X", centerX, centerY);
     });
 
     eraseFoveation(cursorX, cursorY, maskCtx);
