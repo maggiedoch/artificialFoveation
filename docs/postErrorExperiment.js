@@ -9,7 +9,7 @@ const boxContainer = document.getElementById("box-container");
 const feedbackBox = document.getElementById("feedback-box");
 let spacePress = false;
 
-const canvas = document.getElementById("stimuli-canvas");
+const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 canvas.width = boxContainer.clientWidth;
 canvas.height = boxContainer.clientHeight;
@@ -22,7 +22,7 @@ maskCanvas.height = `${boxContainer.offsetHeight}px`;
 let clickedLocations = [];
 let clickedStimulus = null;
 let mouseTrajectory = [];
-let currentTrial = {};
+let currentTrial;
 let trialCounter = 0;
 let logCounter = 0;
 let trialCorrect = false;
@@ -30,6 +30,58 @@ let previousTrialCorrect = null;
 let experimentStartTime = null;
 let trialStartTime = [];
 let stimulusCoordinates = [];
+let trialType;
+let setSize;
+let targetPosition;
+let numItems;
+let iBlock = 0;
+let iTrial = 0;
+
+
+// Exp struct variables
+const preload = 0;
+let expStruct;
+
+// ===============
+// Loading Experiment Structure
+// ===============
+if (preload === 0) {
+    expStruct = makeExpStruct();
+    //initializeData();
+    updateDisplayWithTrialInfo();
+} else {
+    loadExpStruct(expStructId)
+        .then(loadedExpStruct => {
+            expStruct = loadedExpStruct;
+            // Initialize the data object after expStruct is loaded
+            //initializeData();
+            updateDisplayWithTrialInfo();
+            console.log("condition load success");
+        })
+        .catch(error => {
+            console.error("Error:", error);
+        });
+}
+
+function updateDisplayWithTrialInfo() {
+    const totalTrials = expStruct.reduce((total, block) => total + block.trials.length, 0);
+}
+
+async function loadExpStruct(expStructId) {
+    const filePath = `./expStructs_MCMC/expStruct_version${expStructId}.json`; // Use expStructId to construct the file path
+
+    try {
+        const response = await fetch(filePath);
+        if (!response.ok) {
+            throw new Error('Network response was not ok ' + response.statusText);
+        }
+        const expStruct = await response.json();
+        return expStruct;
+    } catch (error) {
+        console.error('Error loading the experiment structure:', error);
+    }
+}
+
 
 // ===============
 // Data Logging
@@ -74,6 +126,8 @@ function logTrialData() {
     const trialData = {
         experimentStartTime,
         logCounter,
+        iBlock,
+        iTrial,
         trialID,
         trialType,
         setSize,
@@ -98,103 +152,62 @@ function logTrialData() {
 // Feedback and Event Listeners
 // ==============================
 
-startBtn.addEventListener("click", startTask);
+startBtn.addEventListener("click", startBlock);
 boxContainer.addEventListener("mousemove", updateCursorPosition);
 window.addEventListener("keydown", handleSpacebarPress);
 
 function handleClick(event) {
-    if (!event || typeof event.clientX === "undefined" || 
-        typeof event.clientY === "undefined") {
-        console.error("handleClick was triggered without a valid event object!");
+    if (!event?.target?.dataset?.stimIndex) {
+        console.error("Invalid click event or missing stimIndex!");
+        showFeedback(false);
+        endTrial();
         return;
     }
 
     const rect = boxContainer.getBoundingClientRect();
-    if (!rect) {
-        console.error("Could not retrieve bounding rect for boxContainer");
-        return;
-    }
-
-    const clickedElement = event.target;
-    // console.log("Clicked element:", clickedElement);
-    if (!clickedElement.dataset.stimIndex) {
-        console.error("Clicked element has no stimIndex dataset attribute!");
-        return;
-    }
-
-    let stimIndex = parseInt(clickedElement.dataset.stimIndex, 10);
-    // console.log("Retrieved stimIndex:", stimIndex);
-    // console.log("StimIndex type:", typeof stimIndex, "Value:", stimIndex);
-
-    // Validate stimIndex before using it
-    if (isNaN(stimIndex) || stimIndex < 0 || 
-    stimIndex >= currentTrial.stimuli.length) {
-        console.error("Invalid stimIndex:", stimIndex);
-        trialCorrect = false;
-        showFeedback(false);
-        endTrial();
-        return;
-    }
-    
+    const clickedIndex = parseInt(event.target.dataset.stimIndex, 10);
     const clickX = event.clientX - rect.left;
     const clickY = event.clientY - rect.top;
-    if (isNaN(clickX) || isNaN(clickY)) {
-        console.error("Click coordinates could not be determined!",
-            { clickX, clickY });
-    }
-    // console.log("Click coordinates:", { clickX, clickY });
 
-
-    // Handle case where click doesn't match a stimulus
-    if (stimIndex === -1) {
-        console.log("Click did not match any stimulus!", { clickX, clickY });
-        trialCorrect = false;
-        showFeedback(false); // Clicked on empty space
-        endTrial();
-        return;
-    }
-
-    // Retrieve correct stimulus object
-    // console.log("Attempting to retreive stimIndex:", stimIndex, 
-        // "from stimuli array:", currentTrial.stimuli);
-    const clickedStimulus = currentTrial.stimuli[stimIndex];
-    // console.log("Retrieved clickedStimulus:", clickedStimulus);
-
-    if (!clickedStimulus) {
-        console.error("clickedStimulus is null or undefined!");
-        trialCorrect = false;
+    if (isNaN(clickedIndex) || clickedIndex < 0 || clickedIndex >= currentTrial.stimuli.length) {
+        console.error("Invalid stimulus index:", clickedIndex);
         showFeedback(false);
         endTrial();
         return;
     }
 
-    clickedStimulus.clickCount += 1;
+    const clickedStimulus = currentTrial.stimuli.find(stim => stim.stimIndex === clickedIndex);
+    if (!clickedStimulus) {
+        console.error("Undefined stimulus at index:", clickedIndex);
+        showFeedback(false);
+        endTrial();
+        return;
+    }
 
+    // Update click count and log the click
+    clickedStimulus.clickCount = (clickedStimulus.clickCount || 0) + 1;
     clickedLocations.push({
         x: clickX,
         y: clickY,
-        correct: clickedStimulus.isTarget,
+        correct: clickedStimulus.targetCond === 1, // Using `targetCond` for correctness
         time: Date.now(),
-        clickCount: clickedStimulus.clickCount, 
-        stimIndex,
-        targetCond: clickedStimulus.isTarget ? 1 : 0,
+        clickCount: clickedStimulus.clickCount,
+        stimIndex: clickedIndex,
+        targetCond: clickedStimulus.targetCond, 
     });
 
-    // console.log("isTarget value at click:", 
-        // clickedStimulus ? clickedStimulus.isTarget : "No stimulus found");
-    
-    trialCorrect = clickedStimulus.isTarget;
-    // console.log("Trial correct based on click:", trialCorrect);
-
+    // Determine correctness using `targetCond` (1 = target, 0 = distractor)
+    trialCorrect = clickedStimulus.targetCond === 1;
     showFeedback(trialCorrect);
     endTrial();
 }
+
 
 function handleSpacebarPress(event) {
     if (event.code === "Space" && !spacePress) {
         spacePress = true;
 
-        if (!isTargetPresent) {
+        if (trialType == "target_absent") {
             trialCorrect = true;
         } else {
             trialCorrect = false;
@@ -231,16 +244,20 @@ function startTask() {
         console.log("Experiment start time:", experimentStartTime);
     }
     trialStartTime = Date.now();
-    console.log("Trial #", logCounter, "start time:", trialStartTime);
-    currentTrial = {
-        trialID: generateTrialID(),
-        trialType: Math.random() < 0.5 ? "targetPresent" : "targetAbsent",
-        stimuli: [],
-    };
+    console.log("Trial #", iTrial, "start time:", trialStartTime);
+
+    //Instead of generating currentTrial, grab from expStruct
+    currentTrial = expStruct[iBlock].trials[iTrial];
+
+    currentTrial.trialID = generateTrialID(),
+
+    trialType = currentTrial.trialType;
+    setSize = currentTrial.setSize;
+    
+    console.log("currentTrial:", currentTrial);
     currentTrial.stimuli.forEach(stim => stim.clickCount = 0);
     // console.log("Trial type for trial #", logCounter, ":", 
         // currentTrial.trialType);
-    startBtn.style.display = "none";
     clearDisplay();
 
     // Ensure the foveation mask exists or create it dynamically
@@ -266,15 +283,8 @@ function startTask() {
     // Initialize the foveation mask position
     drawFoveationMask(cursorX, cursorY);
 
-    isTargetPresent = currentTrial.trialType === "targetPresent";
-    const targetPosition = isTargetPresent ? Math.floor(
-        Math.random() * numItems) : -1;
-    // console.log("Target Position:", targetPosition);
-    // Render stimuli and save details to currentTrial
-    currentTrial.stimuli = renderStimuli(targetPosition, isTargetPresent);
-
-    // Update setSize based on the number of stimuli
-    currentTrial.setSize = currentTrial.stimuli.length;
+    // Render stimuli for the current trial
+    renderStimuli(currentTrial);
 }
 
 function clearDisplay() {
@@ -323,16 +333,13 @@ function endTrial() {
     const trialData = logTrialData();
     spacePress = false;
     previousTrialCorrect = trialCorrect;
-    setTimeout(startTask, 1000);
+    setTimeout(startBlock, 1000);
 }
 
 // ============================
 // Create and Present Stimuli
 // ============================
 
-let isTargetPresent;
-let targetPosition;
-let numItems;
 
 function generateRandomPosition(positions, itemSize, minDistance) {
     let randomX, randomY, isOverlapping;
@@ -356,7 +363,7 @@ function generateRandomPosition(positions, itemSize, minDistance) {
     return { x: randomX, y: randomY };
 }
 
-function createStimulus(x, y, itemSize, isTarget) {
+function createStimulus(x, y, itemSize, isTarget, rotation) {
     const item = document.createElement("div");
     item.classList.add("stimulus", "dynamic");
 
@@ -370,22 +377,25 @@ function createStimulus(x, y, itemSize, isTarget) {
 
     // Assign content and rotation
     item.textContent = isTarget ? "T" : "L";
-    const randomRotation = Math.floor(Math.random() * 4) * 90;
-    item.style.transform = `rotate(${randomRotation}deg)`;
+    //const randomRotation = Math.floor(Math.random() * 4) * 90;
+    item.style.transform = `rotate(${rotation}deg)`;
     return item;
 }
 
-function renderStimuli(targetPosition, isTargetPresent) {
+function renderStimuli(currentTrial) {
     if (!currentTrial) {
         console.error("currentTrial is not initialized");
         return;
     }
     
-    const possibleItemCounts = [1, 2, 4, 8, 12];
-    numItems = possibleItemCounts[Math.floor(Math.random() * 
-        possibleItemCounts.length)];
-    if (isTargetPresent) {
-        targetPosition = Math.floor(Math.random() * numItems);
+    //const possibleItemCounts = [1, 2, 4, 8, 12];
+    numItems = currentTrial.setSize; 
+    if (trialType == "target_present") {
+        for (let stim of currentTrial.stimuli) {
+            if (stim.targetCond === 1) {  // Use triple equals for strict comparison
+                targetPosition = stim.stimIndex;
+            }
+        }
     }  else {
         targetPosition = -1;}
     // console.log("Target Position at start of trial:", targetPosition);
@@ -393,25 +403,26 @@ function renderStimuli(targetPosition, isTargetPresent) {
     const itemSize = 60; 
     const minDistance = itemSize + 10;
     const positions = [];
-    currentTrial.stimuli = [];
  
-    for (let stimIndex = 0; stimIndex < numItems; stimIndex++) {
-        const isTarget = stimIndex === targetPosition && isTargetPresent;
-        const { x, y } = generateRandomPosition(positions, itemSize, 
-            minDistance);
+    for (let stim of currentTrial.stimuli) {
+        const isTarget = stim.targetCond;
+        const stimIndex = stim.stimIndex;
+        const x = stim.xpos; // Use preloaded xpos
+        const y = stim.ypos; // Use preloaded ypos
+        const rotation = stim.rotation;
         positions.push({ x,y });
 
-        const item = createStimulus(x, y, itemSize, isTarget);
+        const item = createStimulus(x, y, itemSize, isTarget, rotation);
         boxContainer.appendChild(item);
 
-        currentTrial.stimuli.push({
-            stimIndex,
-            x,
-            y,
-            itemSize,
-            isTarget,
-            clickCount: 0,
-        });
+        // currentTrial.stimuli.push({
+        //     stimIndex,
+        //     x,
+        //     y,
+        //     itemSize,
+        //     isTarget,
+        //     clickCount: 0,
+        // });
 
         // console.log(`Stimulus ${stimIndex} setup:`, {
             // index: stimIndex,
@@ -552,7 +563,8 @@ function trackDwellTime(cursorX, cursorY, currentTime) {
 // Foveation Mask
 // =================
 
-// I honestly don't remember what this one does
+// I honestly don't remember what this one does 
+// ^ this makes sure that whatever happens in the function runs LAST; i.e., load all domain content then do X
 document.addEventListener('DOMContentLoaded', function() {
     drawFoveationMask(cursorX, cursorY);
 });
@@ -587,4 +599,60 @@ function eraseFoveation(cursorX, cursorY, maskCtx) {
     maskCtx.arc(cursorX, cursorY, 30, 0, Math.PI * 2);
     maskCtx.fill();
     maskCtx.restore();
+}
+
+// =================
+// Experiment Loop
+// =================
+
+function startBlock() {
+    clearDisplay();
+    const messageBox = document.getElementById("message-box");
+    if (iBlock < expStruct.length) {
+        if (iTrial < expStruct[iBlock].trials.length) {
+            messageBox.style.display = "none"; // Hide message
+            startBtn.style.display = "none"; // Hide start button
+            startTask();  // Start the trial
+            iTrial++;  // Increment trial counter
+        } else {
+            iBlock++;  // Increment block counter
+            iTrial = 0;  // Reset trial counter for the new block
+
+            let message = "";
+            if (iBlock < expStruct.length) {
+                if (expStruct[iBlock - 1].isPractice) {
+                    message = `Practice block ${iBlock} out of ${CONFIG.experimentDesign.N_PRACTICE_BLOCKS} completed!`;
+                    if (expStruct[iBlock].isPractice == 0) {
+                        message += `<br><br><b>IMPORTANT:</b> The main experiment starts in the next block.<br>`;
+                    }
+                    message += `<br>Blocks left: ${expStruct.length - iBlock}.`;
+                } else {
+                    message = `You have completed experiment block ${iBlock - CONFIG.experimentDesign.N_PRACTICE_BLOCKS} out of ${CONFIG.experimentDesign.N_BLOCKS}`;
+                    message += `<br>Blocks left: ${expStruct.length - iBlock}.`;
+                }
+                message += `<br><br>Click the Start Task button to continue.`;
+            } else {
+                message = `<br><b>Experiment complete!</b><br>Press the next button to continue.`;
+
+                expTrialsEndTime = Date.now();
+                expTrialsDuration = expTrialsEndTime - expTrialsStartTime;
+                data.expTrialsDuration = expTrialsDuration;
+                console.log("expTrialsDuration logged");
+
+                //show_startDemosButton();
+            }
+
+            // Display message in message box
+            messageBox.innerHTML = message;
+            messageBox.style.display = "block";
+
+            // Show start button for user to continue
+            startBtn.style.display = "block";
+            startBtn.onclick = function () {
+                messageBox.style.display = "none"; // Hide message
+                startBtn.style.display = "none"; // Hide button
+                startBlock();
+            };
+        }
+    }
 }
