@@ -16,8 +16,14 @@ canvas.height = boxContainer.clientHeight;
 
 let maskCanvas = document.getElementById("foveation-mask");
 const maskCtx = maskCanvas.getContext("2d");
-maskCanvas.width = `${boxContainer.offsetWidth}px`;
-maskCanvas.height = `${boxContainer.offsetHeight}px`;
+
+// Ensure the mask covers the entire display
+maskCanvas.width = boxContainer.clientWidth;
+maskCanvas.height = boxContainer.clientHeight;
+maskCanvas.style.position = "absolute"; // Ensure it overlays stimuli
+maskCanvas.style.left = "0px";
+maskCanvas.style.top = "0px";
+maskCanvas.style.zIndex = "2"; // Ensure the mask is on top
 
 let clickedLocations = [];
 let clickedStimulus = null;
@@ -36,12 +42,16 @@ let targetPosition;
 let numItems;
 let iBlock = 0;
 let iTrial = 0;
-const itemSize = 60; 
-
+let reducedSize = CONFIG.stimuli.SQUARE_SIZE * CONFIG.stimuli.REDUCTION_FACTOR / 2;
 
 // Exp struct variables
 const preload = 0;
 let expStruct;
+
+// Ensure foveation mask runs on page load
+document.addEventListener("DOMContentLoaded", function () {
+    drawFoveationMask(cursorX, cursorY);
+});
 
 // ===============
 // Loading Experiment Structure
@@ -155,54 +165,39 @@ function logTrialData() {
 
 startBtn.addEventListener("click", startBlock);
 boxContainer.addEventListener("mousemove", updateCursorPosition);
+canvas.addEventListener("click", handleClick);
+canvas.addEventListener("mousemove", updateCursorPosition);
 window.addEventListener("keydown", handleSpacebarPress);
 
 function handleClick(event) {
-    if (!event?.target?.dataset?.stimIndex) {
-        console.error("Invalid click event or missing stimIndex!");
-        showFeedback(false);
-        endTrial();
-        return;
-    }
-
-    const rect = boxContainer.getBoundingClientRect();
-    const clickedIndex = parseInt(event.target.dataset.stimIndex, 10);
+    const rect = canvas.getBoundingClientRect();
     const clickX = event.clientX - rect.left;
     const clickY = event.clientY - rect.top;
+    let clickedStimulus = null;
 
-    if (isNaN(clickedIndex) || clickedIndex < 0 || clickedIndex >= currentTrial.stimuli.length) {
-        console.error("Invalid stimulus index:", clickedIndex);
-        showFeedback(false);
-        endTrial();
-        return;
+    for (let stim of stimulusCoordinates) {
+        const stimLeft = stim.x - reducedSize;
+        const stimRight = stim.x + reducedSize;
+        const stimTop = stim.y - reducedSize;
+        const stimBottom = stim.y + reducedSize;
+
+        if (clickX >= stimLeft && clickX <= stimRight && clickY >= stimTop && clickY <= stimBottom) {
+            clickedStimulus = stim;
+            break;
+        }
     }
 
-    const clickedStimulus = currentTrial.stimuli.find(stim => stim.stimIndex === clickedIndex);
     if (!clickedStimulus) {
-        console.error("Undefined stimulus at index:", clickedIndex);
+        console.log("Click did not match any stimulus!");
         showFeedback(false);
         endTrial();
         return;
     }
 
-    // Update click count and log the click
-    clickedStimulus.clickCount = (clickedStimulus.clickCount || 0) + 1;
-    clickedLocations.push({
-        x: clickX,
-        y: clickY,
-        correct: clickedStimulus.targetCond === 1, // Using `targetCond` for correctness
-        time: Date.now(),
-        clickCount: clickedStimulus.clickCount,
-        stimIndex: clickedIndex,
-        targetCond: clickedStimulus.targetCond, 
-    });
-
-    // Determine correctness using `targetCond` (1 = target, 0 = distractor)
-    trialCorrect = clickedStimulus.targetCond === 1;
+    trialCorrect = clickedStimulus.isTarget;
     showFeedback(trialCorrect);
     endTrial();
 }
-
 
 function handleSpacebarPress(event) {
     if (event.code === "Space" && !spacePress) {
@@ -244,48 +239,27 @@ function startTask() {
         experimentStartTime = Date.now();
         console.log("Experiment start time:", experimentStartTime);
     }
+
     trialStartTime = Date.now();
     console.log("Trial #", iTrial, "start time:", trialStartTime);
 
-    //Instead of generating currentTrial, grab from expStruct
+    // Load the trial from expStruct
     currentTrial = expStruct[iBlock].trials[iTrial];
 
-    currentTrial.trialID = generateTrialID(),
-
+    currentTrial.trialID = generateTrialID();
     trialType = currentTrial.trialType;
     setSize = currentTrial.setSize;
-    
+
     console.log("currentTrial:", currentTrial);
     currentTrial.stimuli.forEach(stim => stim.clickCount = 0);
-    // console.log("Trial type for trial #", logCounter, ":", 
-        // currentTrial.trialType);
-    clearDisplay();
-
-    // Ensure the foveation mask exists or create it dynamically
-    let maskCanvas = document.getElementById("foveation-mask");
-    if (!maskCanvas) {
-        maskCanvas = document.createElement("canvas");
-        maskCanvas.id = "foveation-mask";
-        boxContainer.appendChild(maskCanvas);
-    }
-
-    // Set mask dimensions
-    maskCanvas.width = boxContainer.offsetWidth;
-    maskCanvas.height = boxContainer.offsetHeight;
-
-    // Log container dimensions for debugging
-    // console.log("boxContainer dimensions:", {
-        // width: boxContainer.clientWidth,
-        // height: boxContainer.clientHeight,
-        // offsetLeft: boxContainer.offsetLeft,
-        // offsetTop: boxContainer.offsetTop
-    // });
-
-    // Initialize the foveation mask position
-    drawFoveationMask(cursorX, cursorY);
-
-    // Render stimuli for the current trial
+    
+    // **Render stimuli first**
     renderStimuli(currentTrial);
+
+    // **Ensure foveation mask is drawn last**
+    requestAnimationFrame(() => {
+        drawFoveationMask(cursorX, cursorY);
+    });
 }
 
 function clearDisplay() {
@@ -341,46 +315,24 @@ function endTrial() {
 // Create and Present Stimuli
 // ============================
 
-
-function generateRandomPosition(positions, itemSize, minDistance) {
-    let randomX, randomY, isOverlapping;
-
-    do {
-        isOverlapping = false;
-        randomX = Math.random() * (boxContainer.clientWidth - itemSize);
-        randomY = Math.random() * (boxContainer.clientHeight - itemSize);
-
-        for (const pos of positions) {
-            const distance = Math.sqrt(
-                Math.pow(randomX - pos.x, 2) + Math.pow(randomY - pos.y, 2)
-            );
-            if (distance < minDistance) {
-                isOverlapping = true;
-                break;
-            }
-        }
-    } while (isOverlapping);
-
-    return { x: randomX, y: randomY };
+function drawT(x, y, color, rotation) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotation * Math.PI / 180);
+    ctx.fillStyle = color;
+    ctx.fillRect(-CONFIG.stimuli.BAR_WIDTH / 2, -CONFIG.stimuli.BAR_LENGTH / 2 + CONFIG.stimuli.BAR_GAP, CONFIG.stimuli.BAR_WIDTH, CONFIG.stimuli.BAR_LENGTH); // Vertical bar
+    ctx.fillRect(-CONFIG.stimuli.BAR_LENGTH / 2, -CONFIG.stimuli.BAR_LENGTH / 2, CONFIG.stimuli.BAR_LENGTH, CONFIG.stimuli.BAR_WIDTH); // Horizontal bar
+    ctx.restore();
 }
 
-function createStimulus(x, y, itemSize, isTarget, rotation) {
-    const item = document.createElement("div");
-    item.classList.add("stimulus", "dynamic");
-
-    // Assign position and size
-    item.style.position = "absolute";
-    item.style.left = `${x}px`;
-    item.style.top = `${y}px`;
-    item.style.width = `${itemSize}px`;
-    item.style.height = `${itemSize}px`;
-    stimulusCoordinates.push({ x, y, itemSize });
-
-    // Assign content and rotation
-    item.textContent = isTarget ? "T" : "L";
-    //const randomRotation = Math.floor(Math.random() * 4) * 90;
-    item.style.transform = `rotate(${rotation}deg)`;
-    return item;
+function drawL(x, y, color, rotation, offset) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotation * Math.PI / 180);
+    ctx.fillStyle = color;
+    ctx.fillRect(-CONFIG.stimuli.BAR_LENGTH / 2 + offset, -CONFIG.stimuli.BAR_LENGTH / 2 - CONFIG.stimuli.BAR_GAP, CONFIG.stimuli.BAR_WIDTH, CONFIG.stimuli.BAR_LENGTH);  //vertical bar
+    ctx.fillRect(-CONFIG.stimuli.BAR_LENGTH / 2, CONFIG.stimuli.BAR_LENGTH / 2 - CONFIG.stimuli.BAR_WIDTH, CONFIG.stimuli.BAR_LENGTH, CONFIG.stimuli.BAR_WIDTH); // Horizontal bar
+    ctx.restore();
 }
 
 function renderStimuli(currentTrial) {
@@ -388,8 +340,9 @@ function renderStimuli(currentTrial) {
         console.error("currentTrial is not initialized");
         return;
     }
-    
-    //const possibleItemCounts = [1, 2, 4, 8, 12];
+
+    // ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous trial stimuli
+
     numItems = currentTrial.setSize; 
     if (trialType == "target_present") {
         for (let stim of currentTrial.stimuli) {
@@ -397,50 +350,31 @@ function renderStimuli(currentTrial) {
                 targetPosition = stim.stimIndex;
             }
         }
-    }  else {
-        targetPosition = -1;}
-    // console.log("Target Position at start of trial:", targetPosition);
-    
-    const minDistance = itemSize + 10;
-    const positions = [];
- 
+    } else {
+        targetPosition = -1;
+    }
+
     for (let stim of currentTrial.stimuli) {
-        const isTarget = stim.targetCond;
-        const stimIndex = stim.stimIndex;
+        const isTarget = stim.targetCond === 1;
         const x = stim.xpos; // Use preloaded xpos
         const y = stim.ypos; // Use preloaded ypos
         const rotation = stim.rotation;
-        positions.push({ x,y });
+        const color = "black"; // Set the color of the stimuli
 
-        const item = createStimulus(x, y, itemSize, isTarget, rotation);
-        boxContainer.appendChild(item);
+        // Draw T or L based on target condition
+        if (isTarget) {
+            drawT(x, y, color, rotation);
+        } else {
+            drawL(x, y, color, rotation, CONFIG.stimuli.BAR_WIDTH / 2); // Adjust offset if necessary
+        }
 
-        // currentTrial.stimuli.push({
-        //     stimIndex,
-        //     x,
-        //     y,
-        //     itemSize,
-        //     isTarget,
-        //     clickCount: 0,
-        // });
-
-        // console.log(`Stimulus ${stimIndex} setup:`, {
-            // index: stimIndex,
-            // assignedAsTarget: isTarget,
-            // targetPosition,
-            // isTargetPresent
-        // });
-
-        item.dataset.stimIndex = stimIndex; // Store index in HTML element
-        item.addEventListener("click", handleClick);
+        // Store stimulus coordinates for tracking
+        stimulusCoordinates.push({ x, y, isTarget });
     }
 
-    // console.log("Final stimuli list after renderStimuli():",
-        // JSON.stringify(currentTrial.stimuli, null, 2));
-    drawFoveationMask(cursorX, cursorY);
-    // cursorRing(cursorX, cursorY);
-    return currentTrial.stimuli;
-}    
+    drawFoveationMask(cursorX, cursorY); // Ensure the mask updates
+}
+
 
 // =================================
 // Cursor Ring and Mouse Position
@@ -457,6 +391,25 @@ let dwellDuration = null;
 let stimuliDwellTime = [];
 const tolerance = 30;
 
+// function updateCursorPosition(event) {
+//     const rect = boxContainer.getBoundingClientRect();
+//     cursorX = event.clientX - rect.left; // relative to boxContainer
+//     cursorY = event.clientY - rect.top;  // relative to boxContainer
+
+//     mouseTrajectory.push({
+//         x: cursorX,
+//         y: cursorY,
+//         time: Date.now(),
+//     });
+
+//     trackDwellTime(cursorX, cursorY, currentTime);
+
+//     // Clear the canvas to remove the previous ring
+//     ctx.clearRect(0, 0, canvas.width, canvas.height);
+//     drawFoveationMask(cursorX, cursorY);
+//     // cursorRing(cursorX, cursorY);
+// }
+
 function updateCursorPosition(event) {
     const rect = boxContainer.getBoundingClientRect();
     cursorX = event.clientX - rect.left; // relative to boxContainer
@@ -468,13 +421,12 @@ function updateCursorPosition(event) {
         time: Date.now(),
     });
 
-    trackDwellTime(cursorX, cursorY, currentTime);
+    trackDwellTime(cursorX, cursorY);
 
-    // Clear the canvas to remove the previous ring
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // **Only redraw the foveation mask, NOT the stimuli**
     drawFoveationMask(cursorX, cursorY);
-    // cursorRing(cursorX, cursorY);
 }
+
 
 function cursorRing(cursorX, cursorY) {
     let cursorRadius = 25;
@@ -485,32 +437,29 @@ function cursorRing(cursorX, cursorY) {
     ctx.stroke();
 }
 
-function trackDwellTime(cursorX, cursorY, currentTime) {
+function trackDwellTime(cursorX, cursorY) {
     if (!currentTrial || !currentTrial.stimuli || currentTrial.stimuli.length === 0) return;
 
-    // Find stimulus within cursor bounds
-    const hoveredStim = currentTrial.stimuli.find((stim) => {
-        const halfSize = itemSize / 2;
-        const stimLeft = stim.xpos - halfSize;
-        const stimRight = stim.xpos + halfSize;
-        const stimTop = stim.ypos - halfSize;
-        const stimBottom = stim.ypos + halfSize;
+    let hoveredStim = null;
 
-        return (
-            cursorX >= stimLeft - tolerance &&
-            cursorX <= stimRight + tolerance &&
-            cursorY >= stimTop - tolerance &&
-            cursorY <= stimBottom + tolerance
-        );
-    });
+    for (let stim of stimulusCoordinates) {
+        let reducedSize = CONFIG.stimuli.SQUARE_SIZE * CONFIG.stimuli.REDUCTION_FACTOR / 2;
 
-    // If cursor is not hovering over a stimulus
+        const stimLeft = stim.x - reducedSize;
+        const stimRight = stim.x + reducedSize;
+        const stimTop = stim.y - reducedSize;
+        const stimBottom = stim.y + reducedSize;
+
+        if (cursorX >= stimLeft && cursorX <= stimRight && cursorY >= stimTop && cursorY <= stimBottom) {
+            hoveredStim = stim;
+            break;
+        }
+    }
+
     if (!hoveredStim) {
         if (lastHoveredStimIndex !== null && entryTime !== null) {
-            // Log dwell time for the last hovered stimulus
             exitTime = Date.now();
             dwellDuration = exitTime - entryTime;
-
             if (dwellDuration >= 0) {
                 stimuliDwellTime.push({
                     stimIndex: lastHoveredStimIndex,
@@ -519,12 +468,6 @@ function trackDwellTime(cursorX, cursorY, currentTime) {
                     totalDwellTime: dwellDuration,
                 });
                 console.log(`Dwell time logged for stimulus ${lastHoveredStimIndex}: ${dwellDuration} ms`);
-            } else {
-                console.warn(`Skipping negative dwell time for stim ${lastHoveredStimIndex}`, {
-                    entryTime,
-                    exitTime,
-                    dwellDuration
-                });
             }
         }
         lastHoveredStimIndex = null;
@@ -532,63 +475,69 @@ function trackDwellTime(cursorX, cursorY, currentTime) {
         return;
     }
 
-    // If cursor enters a new stimulus
     if (hoveredStim.stimIndex !== lastHoveredStimIndex) {
-        // Log the previous dwell entry before switching stimuli
         if (lastHoveredStimIndex !== null && entryTime !== null) {
             exitTime = Date.now();
             dwellDuration = exitTime - entryTime;
-
-            if (dwellDuration >= 0) { // Ensure no negative dwell times
+            if (dwellDuration >= 0) {
                 stimuliDwellTime.push({
                     stimIndex: lastHoveredStimIndex,
                     entryTime: entryTime,
                     exitTime: exitTime,
                     totalDwellTime: dwellDuration,
                 });
-                console.log(`Dwell time logged for stimulus ${lastHoveredStimIndex}: ${dwellDuration} ms`);
             }
         }
-
-        // Start a new dwell entry
         lastHoveredStimIndex = hoveredStim.stimIndex;
         entryTime = Date.now();
-        console.log(`Started dwell time tracking for stimulus ${hoveredStim.stimIndex}`);
     }
 }
-
 
 // =================
 // Foveation Mask
 // =================
 
-// I honestly don't remember what this one does 
-// ^ this makes sure that whatever happens in the function runs LAST; i.e., load all domain content then do X
-document.addEventListener('DOMContentLoaded', function() {
-    drawFoveationMask(cursorX, cursorY);
-});
+// function drawFoveationMask(cursorX, cursorY) {    
+//     // Global mask layer
+//     maskCtx.clearRect(0, 0, boxContainer.offsetWidth, 
+//         boxContainer.offsetHeight); // Clear previous mask
+//     maskCtx.fillStyle = "#e5e7e9";  // gray: #b7b7b7; light gray: #e5e7e9
+//     maskCtx.globalAlpha = 1.0;
+//     maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);  
+    
+//     // Local mask layer
+//     maskCtx.fillStyle = "#000000";
+//     maskCtx.font = "14px Arial";
+//     maskCtx.textAlign = "center";
+//     maskCtx.textBaseline = "middle";
+//     stimulusCoordinates.forEach(({ x, y, reducedSize}) => {
+//         const centerX = x + reducedSize / 2;
+//         const centerY = y + reducedSize / 2;
+//         maskCtx.fillText("X", centerX, centerY);
+//     });
+
+//     eraseFoveation(cursorX, cursorY, maskCtx);
+//     maskCtx.restore();
+// }
 
 function drawFoveationMask(cursorX, cursorY) {    
-    // Global mask layer
-    maskCtx.clearRect(0, 0, boxContainer.offsetWidth, 
-        boxContainer.offsetHeight); // Clear previous mask
-    maskCtx.fillStyle = "#e5e7e9";  // gray: #b7b7b7; light gray: #e5e7e9
-    maskCtx.globalAlpha = 1.0;
+    // **Global mask layer (fully opaque)**
+    maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height); 
+    maskCtx.fillStyle = "rgb(229, 231, 233)";  // Light gray with no transparency
     maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);  
-    
-    // Local mask layer
-    maskCtx.fillStyle = "#000000";
+
+    // **Local mask layer: add '+' marks at stimulus centers**
+    maskCtx.fillStyle = "#000000";  // Black text
     maskCtx.font = "14px Arial";
     maskCtx.textAlign = "center";
     maskCtx.textBaseline = "middle";
-    stimulusCoordinates.forEach(({ x, y, itemSize}) => {
-        const centerX = x + itemSize / 2;
-        const centerY = y + itemSize / 2;
-        maskCtx.fillText("X", centerX, centerY);
+
+    stimulusCoordinates.forEach(({ x, y }) => {
+        maskCtx.fillText("+", x, y);
     });
 
+    // **Erase foveation region at cursor location**
     eraseFoveation(cursorX, cursorY, maskCtx);
-    maskCtx.restore();
 }
 
 function eraseFoveation(cursorX, cursorY, maskCtx) {
