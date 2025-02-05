@@ -36,6 +36,7 @@ let targetPosition;
 let numItems;
 let iBlock = 0;
 let iTrial = 0;
+const itemSize = 60; 
 
 
 // Exp struct variables
@@ -400,7 +401,6 @@ function renderStimuli(currentTrial) {
         targetPosition = -1;}
     // console.log("Target Position at start of trial:", targetPosition);
     
-    const itemSize = 60; 
     const minDistance = itemSize + 10;
     const positions = [];
  
@@ -486,15 +486,15 @@ function cursorRing(cursorX, cursorY) {
 }
 
 function trackDwellTime(cursorX, cursorY, currentTime) {
-    if (!currentTrial.stimuli || currentTrial.stimuli.length === 0) return;
+    if (!currentTrial || !currentTrial.stimuli || currentTrial.stimuli.length === 0) return;
 
-    // Find stimulus within cursor
-    const hoveredStimIndex = currentTrial.stimuli.findIndex((stim) => {
-        const halfSize = stim.itemSize / 2;
-        const stimLeft = stim.x - halfSize;
-        const stimRight = stim.x + halfSize;
-        const stimTop = stim.y - halfSize;
-        const stimBottom = stim.y + halfSize;
+    // Find stimulus within cursor bounds
+    const hoveredStim = currentTrial.stimuli.find((stim) => {
+        const halfSize = itemSize / 2;
+        const stimLeft = stim.xpos - halfSize;
+        const stimRight = stim.xpos + halfSize;
+        const stimTop = stim.ypos - halfSize;
+        const stimBottom = stim.ypos + halfSize;
 
         return (
             cursorX >= stimLeft - tolerance &&
@@ -504,13 +504,13 @@ function trackDwellTime(cursorX, cursorY, currentTime) {
         );
     });
 
-    // If cursor is outside all stimuli
-    if (hoveredStimIndex === -1) {
+    // If cursor is not hovering over a stimulus
+    if (!hoveredStim) {
         if (lastHoveredStimIndex !== null && entryTime !== null) {
             // Log dwell time for the last hovered stimulus
             exitTime = Date.now();
             dwellDuration = exitTime - entryTime;
-            
+
             if (dwellDuration >= 0) {
                 stimuliDwellTime.push({
                     stimIndex: lastHoveredStimIndex,
@@ -518,15 +518,13 @@ function trackDwellTime(cursorX, cursorY, currentTime) {
                     exitTime: exitTime,
                     totalDwellTime: dwellDuration,
                 });
-                console.log(`Dwell time logged for stimulus ${lastHoveredStimIndex}:
-                    ${dwellDuration} ms`);
+                console.log(`Dwell time logged for stimulus ${lastHoveredStimIndex}: ${dwellDuration} ms`);
             } else {
-                console.warn(`Skipping negative dwell time for stim 
-                    ${lastHoveredStimIndex}`, {
-                        entryTime,
-                        exitTime,
-                        dwellDuration
-                    });
+                console.warn(`Skipping negative dwell time for stim ${lastHoveredStimIndex}`, {
+                    entryTime,
+                    exitTime,
+                    dwellDuration
+                });
             }
         }
         lastHoveredStimIndex = null;
@@ -535,9 +533,9 @@ function trackDwellTime(cursorX, cursorY, currentTime) {
     }
 
     // If cursor enters a new stimulus
-    if (hoveredStimIndex !== lastHoveredStimIndex) {
+    if (hoveredStim.stimIndex !== lastHoveredStimIndex) {
         // Log the previous dwell entry before switching stimuli
-        if (lastHoveredStimIndex !== null & entryTime !== null) {
+        if (lastHoveredStimIndex !== null && entryTime !== null) {
             exitTime = Date.now();
             dwellDuration = exitTime - entryTime;
 
@@ -547,17 +545,18 @@ function trackDwellTime(cursorX, cursorY, currentTime) {
                     entryTime: entryTime,
                     exitTime: exitTime,
                     totalDwellTime: dwellDuration,
-            });
-            console.log(`Dwell time logged for stimulus ${lastHoveredStimIndex}
-                ${dwellDuration} ms`);
-        } 
+                });
+                console.log(`Dwell time logged for stimulus ${lastHoveredStimIndex}: ${dwellDuration} ms`);
+            }
+        }
+
+        // Start a new dwell entry
+        lastHoveredStimIndex = hoveredStim.stimIndex;
+        entryTime = Date.now();
+        console.log(`Started dwell time tracking for stimulus ${hoveredStim.stimIndex}`);
     }
-    // Start a new dwell entry
-    lastHoveredStimIndex = hoveredStimIndex;
-    entryTime = Date.now();
-    // console.log(`Started dwell time tracking for stimulus ${hoveredStimIndex}`);
 }
-}
+
 
 // =================
 // Foveation Mask
