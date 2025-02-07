@@ -27,6 +27,7 @@ let trialCounter = 0;
 let logCounter = 0;
 let trialCorrect = false;
 let previousTrialCorrect = null;
+let previousTrialSize = null;
 let experimentStartTime = null;
 let trialStartTime = [];
 let stimulusCoordinates = [];
@@ -84,6 +85,7 @@ function logTrialData() {
         missCount,
         trialCorrect,
         previousTrialCorrect,
+        previousTrialSize,
         stimuli: stimuliJSON,
         allClicks: allClicksJSON,
         mouseTrajectory: mouseTrajectoryJSON,
@@ -323,6 +325,7 @@ function endTrial() {
     const trialData = logTrialData();
     spacePress = false;
     previousTrialCorrect = trialCorrect;
+    previousTrialSize = currentTrial.setSize;
     setTimeout(startTask, 1000);
 }
 
@@ -381,7 +384,7 @@ function renderStimuli(targetPosition, isTargetPresent) {
         return;
     }
     
-    const possibleItemCounts = [1, 2, 4, 8, 12];
+    const possibleItemCounts = [4, 16, 36];
     numItems = possibleItemCounts[Math.floor(Math.random() * 
         possibleItemCounts.length)];
     if (isTargetPresent) {
