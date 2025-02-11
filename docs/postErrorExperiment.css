@@ -8,6 +8,7 @@ body {
     margin: 0;
 }
 
+/* START BUTTON */
 #start-btn {
     margin: 20px;
     padding: 10px 20px;
@@ -15,6 +16,7 @@ body {
     cursor: pointer;
 }
 
+/* STIMULUS DISPLAY LAYER */
 #box-container {
     position: relative; /* Set the box as a relative container */
     width: 800px; /* Set a fixed box width */
@@ -42,7 +44,6 @@ body {
     pointer-events: auto;
 }
 
-
 .grid-item {
     position: absolute; /* Position items within box */
     width: 60px;
@@ -66,6 +67,7 @@ body {
    /* background-color: #ffffff; */
 }
 
+/* FEEDBACK */
 #feedback-box {
     margin-top: 20px;
     font-size: 18px; 
@@ -77,6 +79,7 @@ body {
     display: none; 
 }
 
+/* MASK LAYER */
 #foveation-mask {
     position: absolute;
     top: 0;
