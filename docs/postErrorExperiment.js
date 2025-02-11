@@ -240,6 +240,12 @@ function startTask() {
     clickedLocations = [];
     mouseTrajectory = [];
     
+    // Check previousTrialCentered and remove fixation cross
+    checkCursorCentered();
+    let existingFixation = document.getElementById("fixationCross");
+    if (existingFixation) {
+        existingFixation.remove();
+    
     if (experimentStartTime === null) {
         experimentStartTime = Date.now();
         console.log("Experiment start time:", experimentStartTime);
@@ -339,7 +345,8 @@ function endTrial() {
     previousTrialCorrect = trialCorrect;
     previousTrialSize = currentTrial.setSize;
     trialActive = false;
-    setTimeout(startTask, 1000);
+    drawCenterFixation();
+    setTimeout(startTask, 1500);
 }
 
 // ============================
@@ -603,4 +610,46 @@ function eraseFoveation(cursorX, cursorY, maskCtx) {
     maskCtx.arc(cursorX, cursorY, 30, 0, Math.PI * 2);
     maskCtx.fill();
     maskCtx.restore();
+}
+
+// ==================
+// Foveation Cross
+// ==================
+
+let previousTrialCentered = null; // Will use to determine cross color
+
+function drawCenterFixation() {
+    const fixation = document.createElement("div");
+    fixation.id = "fixationCross";
+    
+    fixation.style.position = "absolute";
+    fixation.style.left = `${canvas.width / 2}px`;
+    fixation.style.top = `${canvas.height /2}px`;
+
+    let crossColor = previousTrialCentered === false ? "#ff0016" : "#1b8f33";
+        // If previousTrialCentered is false, draw red. Otherwise, green.
+    fixation.style.color = crossColor;
+    fixation.style.transform = "translate(-50%, -50%)";
+    fixation.style.fontSize = "30px";
+    fixation.style.fontWeight = "bold";
+    fixation.style.zIndex = "3"; // One layer above foveation mask
+    fixation.textContent = "+";
+
+    boxContainer.appendChild(fixation);
+}
+
+function checkCursorCentered () {
+    const fixationSize = 30;
+    
+    // Define fixation cross bounds
+    const fixLeft = canvas.width / 2 - fixationSize / 2 - tolerance;
+    const fixRight = canvas.width / 2 + fixationSize / 2 + tolerance;
+    const fixTop = canvas.height / 2 - fixationSize / 2 - tolerance;
+    const fixBottom = canvas.height / 2 + fixationSize / 2 + tolerance;
+
+    previousTrialCentered =
+        cursorX >= fixLeft && cursorX <= fixRight &&
+        cursorY >= fixTop && cursorY <= fixBottom;
+
+    console.log(`Previous Trial Centered: ${previousTrialCentered}`);
 }
