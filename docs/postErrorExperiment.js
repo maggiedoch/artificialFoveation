@@ -9,16 +9,19 @@ const boxContainer = document.getElementById("box-container");
 const feedbackBox = document.getElementById("feedback-box");
 let spacePress = false;
 
+// For stimulus array
 const canvas = document.getElementById("stimuli-canvas");
 const ctx = canvas.getContext("2d");
 canvas.width = boxContainer.clientWidth;
 canvas.height = boxContainer.clientHeight;
 
+// For foveation mask
 let maskCanvas = document.getElementById("foveation-mask");
 const maskCtx = maskCanvas.getContext("2d");
 maskCanvas.width = `${boxContainer.offsetWidth}px`;
 maskCanvas.height = `${boxContainer.offsetHeight}px`;
 
+// For data logging
 let clickedLocations = [];
 let clickedStimulus = null;
 let mouseTrajectory = [];
@@ -31,6 +34,9 @@ let previousTrialSize = null;
 let experimentStartTime = null;
 let trialStartTime = [];
 let stimulusCoordinates = [];
+
+// Used to prevent extraneous clicks or presses
+let trialActive = null;
 
 // ===============
 // Data Logging
@@ -105,6 +111,8 @@ boxContainer.addEventListener("mousemove", updateCursorPosition);
 window.addEventListener("keydown", handleSpacebarPress);
 
 function handleClick(event) {
+    if (!trialActive) = return; // Ignore extraneous clicks
+    
     if (!event || typeof event.clientX === "undefined" || 
         typeof event.clientY === "undefined") {
         console.error("handleClick was triggered without a valid event object!");
@@ -193,6 +201,8 @@ function handleClick(event) {
 }
 
 function handleSpacebarPress(event) {
+    if (!trialActive || event.code !== "Space") return; // Ignore if trial is inactive or key is not Space
+    
     if (event.code === "Space" && !spacePress) {
         spacePress = true;
 
@@ -226,8 +236,10 @@ function showFeedback(isCorrect) {
 // ======================
 
 function startTask() {
+    trialActive = true; // Accept clicks or presses
     clickedLocations = [];
     mouseTrajectory = [];
+    
     if (experimentStartTime === null) {
         experimentStartTime = Date.now();
         console.log("Experiment start time:", experimentStartTime);
@@ -326,6 +338,7 @@ function endTrial() {
     spacePress = false;
     previousTrialCorrect = trialCorrect;
     previousTrialSize = currentTrial.setSize;
+    trialActive = false;
     setTimeout(startTask, 1000);
 }
 
