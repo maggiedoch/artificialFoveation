@@ -7,7 +7,203 @@
     <link rel="stylesheet" href="postErrorExperiment.css">
 </head>
 <body>
-    <h1>T's and L's Task</h1>
+    <h1 id="task-header">T's and L's Task</h1>
+
+    <!-------------------------------------------->
+    <!-- Consent Form Section -->
+    <!-------------------------------------------->
+    <div id="consentFormSection" class="instructionsDiv">
+        <h2>Informed Consent Form for Visual Search Study</h2>
+        <h2>Visual Search Study, George Washington University, IRB Protocol #091737</h2>
+        <p><strong>Principal Investigator:</strong> Stephen Mitroff, Ph.D. (202-994-6912)</p>
+        <p><strong>Sponsor:</strong> Department of Defense Army Research Laboratory</p>
+        <p>This research project involves research on human visual perception and attention, and it is supported by the Army Research Laboratory. It requires you (the subject) to simply examine a variety of computer displays and/or sounds and to make computer-based responses. Please read this page and decide if you want to be in the study. Taking part is completely voluntary and even if you decide you want to participate, you can quit at any time without penalty.</p>
+        <p>We may ask you to complete surveys about yourself. You could be asked about your activities, your personality, mental health, use of firearms, political ideology, negative thoughts and feelings, video game playing experiences, etc. These questions are asked so that we can understand what traits and experiences relate to cognitive performance. We are interested in general trends, so your data will be pooled with that of others, and your personal responses will be confidential.</p>
+        <p>We may keep a secure log of your e-mail address linked to an arbitrary number that will serve as a participant ID. Responses will be saved with this number in our data files. Once we have finished collecting data however the key linking the name/email to the participant ID will be erased. Thus, we end up with data that cannot be linked to you or any other individual. The key temporarily linking names and participant IDs will be stored in a locked file or secure computer file.</p>
+        <p><strong>The experiment will take no more than 2 hours and will involve no discomfort or deception.</strong> There is only minimal risk to you: we will collect personal information and while every effort will be made to keep it securely stored, there is a small chance that someone not on our research team could find out that you took part in the study or somehow connect your name with the information we collect about you. However, this risk is minimized since your responses online are tracked through the participant ID described above.</p>
+        <p>The records of this study will be kept private so that your participation will be anonymous and confidential. In any published articles or presentations, we will not include any information that will make it possible to identify you as a subject. Note that since this research is supported by the Department of Defense, they are eligible to review research records to ensure the protection of human participants. Accurate and complete study records will be maintained and made available to representatives of the U.S. Army Research Laboratory as a part of their responsibility to protect human subjects in research.</p>
+        <p>The only benefits of this study for you are some interesting facts you may learn about perception. More broadly, this work can hopefully inform theories about cognition and help improve real-world performance in a number of important tasks.</p>
+        <p>Your participation is entirely voluntary, and you may skip portions or leave at any time. Refusal to participate or withdraw from the study will involve no penalty or loss of benefits. <strong>You will be compensated at a minimum rate of $10/hour.</strong></p>
+        <p>We will keep your data indefinitely for possible use in other scientific publications. These data will not be identifiable.</p>
+        <p>The Principal Investigator on this project, Dr. Stephen Mitroff, has a potential conflict of interest in that he is a co-founder of a company, Kedlin Screening International, and that company could indirectly benefit from the results of this work (e.g., if something interesting is found in the current study, those findings could serve as useful background literature). Several factors minimize concerns: (1) The lab has been doing research of this nature since 2007—it is a well-grounded area that will not be easily influenced by new developments; (2) the research efforts are led by students and postdoctoral researchers, none of which are affiliated with the company, and their primary goals (and Dr. Mitroff’s) are to publish; and (3) any of the generated work that could potentially inform the company would be academic in nature and would go through the usual review processes. As such, any findings would be vetted as academic works and could benefit any company.</p>
+        <p>If you have any questions or concerns regarding this experiment, please contact the experimenter now and/or contact the Principal Investigator, Dr. Stephen Mitroff, in the Department of Psychological & Brain Sciences at 202-994-6912 or via email at mitroff@gwu.edu. For questions about your role and rights as a research subject, contact the staff of George Washington University's Office of Human Research at 202-994-2715.</p>
+        <p>
+            <input type="checkbox" id="consentCheckbox">
+            <label for="consentCheckbox">I have read the above information, understand my rights as a participant, and agree to participate in this study.</label>
+        </p>
+        <input type="button" id="startInstructionsButton" value="Next" disabled onclick="startInstructions()">
+    </div>
+
+    <!-------------------------------------------->
+    <!-- INSTRUCTIONS PAGE 1 (WELCOME) DIV -->
+    <!-------------------------------------------->
+    <div id="instructions_page1" class="instructionsDiv">
+        <p style="text-align: center;"><strong>
+            Visual Search Task
+        </strong></p>
+        <p><strong>
+            [Important instructions for compensation]
+            <br>Please note that we are only able to compensate completed experiments.
+            <br>Do NOT refresh or use the back button in this window. This may compromise your data.
+            <br>Do NOT exit the window before reaching the final Prolific submission page.
+        </strong></p>
+        <hr />
+        <p>Please read the following task instructions carefully.</p>
+        <p>
+            Complete this experiment in full screen mode on a laptop or desktop computer. 
+            <br>It will not work on a mobile or touch screen device. A keyboard, mouse/trackpad, and a big enough screen are required.
+        </p>
+        <p>There will be a total of <span id="total-trials">XXXX</span> trials, and we estimate that the experiment will take approximately <span id="estimated-time">XXXX</span> minutes to complete.</p>
+        <hr />
+        <p><i>Click the 'NEXT' button below for instructions.</i></p> 
+        <!-- NEXT BUTTON -->
+        <div class="containerDiv">
+            <input type="submit" id="next1Button" class="buttonsDiv" value="NEXT" style="width: 200px;" onclick="show_instructions2()"/>
+        </div>
+    </div>
+
+    <!-------------------------------------------->
+    <!-- INSTRUCTIONS PAGE 2 (DESCRIBE STIMULI) DIV-->
+    <!-------------------------------------------->
+    <div id="instructions_page2" class="instructionsDiv">
+        <p style="font-weight: normal">This is a visual search task where you will be required to correctly pick a target out of an array of distractors.</p>
+        <p style="font-weight: normal">On each trial, you will see many bars that look like <strong>"L"</strong> shapes, these are the distractors.</p>
+        <p style="font-weight: normal">Your job is to find the target <strong>"T"</strong> shape hidden among the <strong>"L"</strong>s.</p>
+        <hr />
+        <p> Here are examples of both <strong>"L"</strong> and <strong>"T"</strong> shapes.</p>
+        <p>  
+            <div style="display: flex; justify-content: space-around;">
+                <div style="display: flex; flex-direction: column; align-items: center;">
+                    <span><u><strong><i>"L" Shapes (distractors)</i></strong></u></span>
+                    <img id="Example_Ls" class="exampleSearch" src="" width=250>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: center;">
+                    <span><u><strong><i>"T" Shapes (targets)</i></strong></u></span>
+                    <img id="Example_Ts" class="exampleSearch" src="" width=250>
+                </div>
+            </div>
+        </p> 
+        <p style="font-weight: normal">The  <i>rotation</i> of the <strong>"L"</strong> and <strong>"T" </strong>shapes can vary, so you may need to look very closely to find the targets. </p>
+        <hr />
+        <p><i>Click the 'NEXT' button below for further instructions.</i></p>
+        <!-- NEXT BUTTON -->
+        <div class="containerDiv">
+            <input type="submit" id="next2Button" class="buttonsDiv" value="NEXT" style="width: 200px;" onclick="show_instructions3()"/>
+        </div>
+    </div>
+
+    <!-------------------------------------------->
+    <!-- INSTRUCTIONS PAGE 3 (DESCRIBE TRIAL TYPES) DIV-->
+    <!-------------------------------------------->
+    <div id="instructions_page3" class="instructionsDiv"> 
+        <p style="font-weight: normal">Here are some example arrays. Each array has <strong>a maximum of one "T"</strong> or no "T"s at all.</p>
+        <p>For example:</p>
+        <p>  
+            <div style="display: flex; justify-content: space-around;">
+                <div style="display: flex; flex-direction: column; align-items: center;">
+                    <span><u><strong><i>"T" - Present Trial</i></strong></u></span>
+                    <img id="Example_TargetPresent" class="exampleSearch" src="" width=250>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: center;">
+                    <span><u><strong><i>"T" - Absent Trial</i></strong></u></span>
+                    <img id="Example_TargetAbsent" class="exampleSearch" src="" width=250>
+                </div>
+            </div>            
+        </p> 
+        <p style="font-weight: normal; color: red;"><strong>There will never be more than one T in each array.</strong></p>
+        <hr />
+        <p><i>Click the 'NEXT' button below for further instructions.</i></p> 
+        <!-- NEXT BUTTON -->
+        <div class="containerDiv">
+            <input type="submit" id="next3Button" class="buttonsDiv" value="NEXT" style="width: 200px;" onclick="show_instructions4()"/>  
+        </div>
+    </div>
+
+    <!-------------------------------------------->
+    <!-- INSTRUCTIONS PAGE 4 (DESCRIBE TARGET SELECTION) DIV-->
+    <!-------------------------------------------->
+    <div id="instructions_page4" class="instructionsDiv">
+        <p><strong style="color: red;">If you find a "T",</strong> use your mouse to select it with a click. An empty circle to mark your selection will appear if you click on either a "T" or a "L". <strong>You can only make ONE selection per trial.</strong></p>
+        <p style="text-align: center;">
+            <img id="ClickProgression" class="exampleSearch" src="" width="200">
+        </p>
+        <p><strong style="color: red;">If the array does NOT contain a "T",</strong> do NOT click on anything.</p> 
+        <p><strong style="color: red;">When you have finished searching,</strong> press the <strong>SPACEBAR</strong> to indicate that you are ready to move on.</p>
+        <p>Excellent searchers are not only accurate, but also fast and precise. Please do your best to:</p>
+        <ol>
+            <li>Correctly find the target "T"</li>
+            <li>Avoid clicking on any distractor "L"s</li>
+            <li>Finish searching the array as quickly as possible</li>
+        </ol>
+        <hr />
+        <p><i>Click the 'NEXT' button below for further instructions.</i></p> 
+        <!-- NEXT BUTTON -->
+        <div class="containerDiv">
+            <input type="submit" id="next4Button" class="buttonsDiv" value="NEXT" style="width: 200px;" onclick="show_instructions5()"/>  
+        </div>
+    </div>    
+        
+    <!-------------------------------------------->
+    <!-- INSTRUCTIONS PAGE 5 (DESCRIBE HOVER TO PROCEED) DIV-->
+    <!-------------------------------------------->
+    <div id="instructions_page5" class="instructionsDiv"> 
+        <p>A black circle will appear at the center of the display after you press the SPACEBAR. </p>
+        <p><strong>Hover your cursor over the circle to proceed to the next trial:</strong> </p>
+        <p style="text-align: center;">
+            <img id="Hover_Cursor" class="exampleSearch" src="" width=300>
+        </p>
+        <hr />
+        <p><i>Click the 'NEXT' button below for further instructions.</i></p> 
+        <!-- NEXT BUTTON -->
+        <div class="containerDiv">
+            <input type="submit" id="next3Button" class="buttonsDiv" value="NEXT" style="width: 200px;" onclick="show_instructions6()"/>  
+        </div>
+    </div>
+
+    <!-------------------------------------------->
+    <!-- INSTRUCTIONS PAGE 6 (DESCRIBE FEEDBACK) DIV-->
+    <!-------------------------------------------->
+    <div id="instructions_page6" class="instructionsDiv">
+        <p><strong style="color: red;">In practice trials ONLY: </strong>After pressing the SPACEBAR, your selection will fill with a colored shape which reflects whether it was correct or incorrect.</p>
+        <p> A <strong> green circle </strong>indicates a correct target selection, and a <strong>red triangle</strong> indicates an incorrect selection. A missed target will be <strong>circled in red</strong>. </p>
+        <p> For example:</p>
+        <div style="display: flex; justify-content: center;">
+            <div style="flex: 1; text-align: center;">
+                <strong><u>Correct</u></strong>
+                <p><img id="CorrectClick" class="exampleSearch" src="" width=75></p>
+            </div>
+            <div style="flex: 1; text-align: center;">
+                <strong><u>Incorrect</u></strong>
+                <p><img id="IncorrectClick" class="exampleSearch" src="" width=75></p>
+            </div>
+            <div style="flex: 1; text-align: center;">
+                <strong><u>Missed</u></strong>
+                <p><img id="MissedTarget" class="exampleSearch" src="" width=75></p>
+            </div>
+        </div>
+        <p style="font-weight: normal; color: red;"><strong>This feedback is only available during practice. In the main experiment, you WILL NOT see any of these markers after pressing the SPACEBAR.</strong></p>
+        <hr />
+        <p> <i>Click the 'NEXT' button below for further instructions.</i> </p> 
+    <!-- NEXT BUTTON -->
+        <div class="containerDiv">      
+            <input type="submit" id="next3Button" class="buttonsDiv" value="NEXT" style="width: 200px;" onclick="show_instructions7()"/>  
+        </div>
+    </div>
+
+    <!-------------------------------------------->
+    <!-- INSTRUCTIONS PAGE 7 (OVERVIEW BEFORE PRACTICE) DIV-->
+    <!-------------------------------------------->
+    <div id="instructions_page7" class="instructionsDiv"> 
+        <p> On each trial, you have <strong id="time-limit">XXX seconds</strong> to search the array and press SPACEBAR to move on. <strong>If you take longer than this, the trial is considered failed.</strong></p>
+        <p> That is all of the instructions! Now, you have a chance to practice the task before beginning the main experiment.	</p>
+        <hr />
+        <p> <i>To proceed to the practice trials, click the button below.</i></p>
+        <!-- START PRACTICE BUTTON -->
+        <div class="containerDiv" style="text-align: center;">
+            <input type="submit" id="startExperimentButton" class="buttonsDiv" value="START PRACTICE" style="width: 200px; margin-right: 0;" onclick="showTask()"/>
+        </div>
+    </div>
+
     <button id="start-btn">Start Task</button>
 
     <!-- Container for stimuli-->
@@ -19,6 +215,7 @@
     <div id="feedback-box" style="margin-top: 20px; font-size: 18px; color:black;"></div>
     <div id="message-box" style="display: none; font-size: 14px; text-align: center; margin-top: 14px;"></div>
     <script src = "experimentDesign.js"></script>
+    <script src = "showInstructions.js"></script>
     <script src="postErrorExperiment.js"></script>
 </body>
 </html>

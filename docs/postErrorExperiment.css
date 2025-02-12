@@ -13,9 +13,13 @@ body {
     padding: 10px 20px;
     font-size: 16px;
     cursor: pointer;
+    display: none;
 }
 
 #box-container {
+    visibility: hidden;  /* Hides the element but keeps its layout */
+    opacity: 0;          /* Makes it fully transparent */
+    transition: opacity 0.3s ease-in-out; /* Smooth fade-in effect */
     position: relative; /* Set the box as a relative container */
     width: 800px; /* Set a fixed box width */
     height: 600px; /* Set a fixed box height */
@@ -86,4 +90,67 @@ body {
     background-color: transparent;
     pointer-events: none; /* Ensure it doesn't block interactions with stimuli */
     z-index: 2;
+}
+
+/* INSTRUCTIONS */
+.instructionsDiv {
+    display: none; /* Add this line to initially hide all instruction divs */
+    max-height: 80vh; /* Maximum height relative to the viewport */
+    max-width: 800px; /* Sets a maximum width to maintain readability */
+    overflow-y: auto; /* Enables vertical scrolling if content overflows */
+    padding: 40px; /* Padding for better readability */
+    margin: 0 auto;
+    background-color: white; /* White background for the instructions */
+    border-radius: 10px; /* Soft rounded corners */
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); /* Soft shadow around the div for depth */
+    text-align: justify;
+    line-height: 1.6; /* Improved line height for readability */
+    font-size: 16px; /* Larger font size for better readability */
+}
+
+.instructionsDiv > h2 {
+    text-align: center;
+    font-size: 18px;
+}
+
+.containerDiv {
+    text-align: right; /* Right aligns the buttons */
+    padding-bottom: 20px; /* Adds some space below the buttons */
+}
+
+/* rule to ensure buttons are visible when the instructions div is visible */
+.instructionsDiv .buttonsDiv {
+	display: inline-block; 
+}
+
+/* Consent Form Style */
+#consentFormSection {
+    max-width: 80vw; /* 80% of the viewport width */
+    width: 80%; /* Width set to 80% */
+}
+
+/* EXPERIMENT CANVAS */
+
+#experimentContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.canvas-container {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+canvas {
+    border: 1px solid #000;
+    background-color: white;
+}
+
+#startDemosButton {
+    margin: 20px;
+    text-align: center;
+    display: none;
 }

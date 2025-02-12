@@ -553,6 +553,43 @@ function eraseFoveation(cursorX, cursorY, maskCtx) {
 // Experiment Loop
 // =================
 
+// kick off the experiment
+show_consent();
+
+function showTask() {
+    let boxContainer = document.getElementById("box-container");
+    let foveationMask = document.getElementById("foveation-mask");
+    let startButton = document.getElementById("start-btn");
+
+    // Show box container smoothly
+    boxContainer.style.visibility = "visible";
+    boxContainer.style.opacity = "1";
+
+    // Ensure foveation mask is visible
+    foveationMask.style.visibility = "visible";
+    foveationMask.style.opacity = "1";
+
+    // Show the start button
+    startButton.style.display = "block";
+
+    // Refresh canvas rendering
+    // let canvas = document.getElementById("canvas");
+    // if (canvas) {
+    //     let ctx = canvas.getContext("2d");
+    //     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    //     ctx.fillStyle = "white";
+    //     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // }
+
+    // Ensure cursor event listeners are reattached
+    // attachCursorListeners();
+
+    hideAllInstructionDivs();
+
+}
+
+
+
 function startBlock() {
     clearDisplay();
     const messageBox = document.getElementById("message-box");
