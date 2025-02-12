@@ -407,7 +407,6 @@ const tolerance = 30;
 //     // Clear the canvas to remove the previous ring
 //     ctx.clearRect(0, 0, canvas.width, canvas.height);
 //     drawFoveationMask(cursorX, cursorY);
-//     // cursorRing(cursorX, cursorY);
 // }
 
 function updateCursorPosition(event) {
@@ -425,16 +424,6 @@ function updateCursorPosition(event) {
 
     // **Only redraw the foveation mask, NOT the stimuli**
     drawFoveationMask(cursorX, cursorY);
-}
-
-
-function cursorRing(cursorX, cursorY) {
-    let cursorRadius = 25;
-    ctx.beginPath(); 
-    ctx.arc(cursorX, cursorY, cursorRadius, 0, 2 * Math.PI);
-    ctx.strokeStyle = 'red';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
 }
 
 function trackDwellTime(cursorX, cursorY) {
