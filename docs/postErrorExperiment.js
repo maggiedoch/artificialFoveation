@@ -533,7 +533,7 @@ function eraseFoveation(cursorX, cursorY, maskCtx) {
     maskCtx.save();
     maskCtx.globalCompositeOperation = "destination-out";
     maskCtx.beginPath();
-    maskCtx.arc(cursorX, cursorY, 45, 0, Math.PI * 2);
+    maskCtx.arc(cursorX, cursorY, 37.5, 0, Math.PI * 2);
     maskCtx.fill();
     maskCtx.restore();
 }
