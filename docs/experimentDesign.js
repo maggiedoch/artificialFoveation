@@ -1,6 +1,6 @@
 // Notes:
 // Only black stimuli, no salience variation
-// Varying set size: 1, 12, 18, 24
+// Varying set size: 4 12, 20
 
 //----------------------------------
 // EXPERIMENT CONFIG
