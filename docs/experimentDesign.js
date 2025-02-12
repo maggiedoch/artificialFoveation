@@ -14,7 +14,7 @@ const CONFIG = {
 		BAR_GAP: 12, // gap between horizontal and vertical bars
 		L_MAX_JITTER: 6, // the larger this number and closer it is to BAR_LENGTH/2, the more Ls look like Ts
 		MIN_STIM_GAP: 8, // for best results make sure that this is more than BAR_GAP/2
-        SET_SIZE: [1, 12, 18, 24],
+        SET_SIZE: [4, 12, 20],
 		GRID_ROWS: 6, // even numbers are better to make sure hover circle doesn't cover stimulus
 		GRID_COLS: 8,
 		SQUARE_SIZE: 80,
