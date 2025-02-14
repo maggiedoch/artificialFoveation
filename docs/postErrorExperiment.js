@@ -35,6 +35,7 @@ let trialCorrect = false;
 let previousTrialCorrect = null;
 let experimentStartTime = null;
 let trialStartTime = [];
+let isOutlierRT = null;
 let stimulusCoordinates = [];
 let trialType;
 let setSize;
@@ -129,6 +130,15 @@ function logTrialData() {
         };
     });
 
+    // Check for outlier RTs
+    if (totalSearchTime <= 100) {
+        isOutlierRT = true;
+    } else if (totalSearchTime >= 15000) {
+        isOutlierRT = true;
+    } else {
+        isOutlierRT = false;
+    }
+
     const stimuliJSON = JSON.stringify(currentTrial.stimuli);
     const allClicksJSON = JSON.stringify(allClicks);
     const mouseTrajectoryJSON = JSON.stringify(mouseTrajectory || []);
@@ -143,6 +153,7 @@ function logTrialData() {
         trialType,
         setSize,
         totalSearchTime,
+        isOutlierRT,
         hitCount,
         faCount,
         correctRejectionCount,
