@@ -63,9 +63,8 @@ function show_instructions5() {
 
 function show_instructions6() {
     transitionInstructions('instructions_page5', 'instructions_page6', [
-        {id: 'CorrectClick', src: 'instrPics/Correct_Click.png'},
-        {id: 'IncorrectClick', src: 'instrPics/Incorrect_Click.png'},
-        {id: 'MissedTarget', src: 'instrPics/Missed_Target.png'},
+        {id: 'CorrectClick', src: 'instrPics/fullScreenTrialCorrect.png'},
+        {id: 'IncorrectClick', src: 'instrPics/fullScreenTrialIncorrect.png'},
     ]);
 }
 
