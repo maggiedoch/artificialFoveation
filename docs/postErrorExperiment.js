@@ -265,7 +265,7 @@ function drawCenterHint() {
 
     // Hover instructions
     ctx.font = "12px Arial";
-    ctx.fillStyle = "#818589"; // Gray
+    ctx.fillStyle = "#5c1a75"; // Purple
     let hoverCircleInstructions = "Hover cursor over circle to start next trial";
     ctx.textAlign = "center";
     ctx.fillText(hoverCircleInstructions, canvas.width / 2, canvas.height / 2 - 15); // Positions text over circle
