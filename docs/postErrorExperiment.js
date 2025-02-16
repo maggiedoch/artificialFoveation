@@ -45,6 +45,9 @@ let iBlock = 0;
 let iTrial = 0;
 let reducedSize = CONFIG.stimuli.SQUARE_SIZE * CONFIG.stimuli.REDUCTION_FACTOR / 2;
 
+// For preventing multiple clicks or spacebar presses
+let trialActive = null;
+
 // Exp struct variables
 const preload = 0;
 let expStruct;
@@ -170,9 +173,9 @@ function logTrialData() {
     return trialData;
 }
 
-// ==============================
-// Feedback and Event Listeners
-// ==============================
+// =====================================
+// Handle Clicks and Spacebar Presses
+// =====================================
 
 startBtn.addEventListener("click", startBlock);
 boxContainer.addEventListener("mousemove", updateCursorPosition);
@@ -186,6 +189,8 @@ function handleClick(event) {
     const clickY = event.clientY - rect.top;
     let clickedStimulus = null;
 
+    if (!trialActive) return; // Ignore extra clicks if trial over
+    
     for (let stim of stimulusCoordinates) {
         const stimLeft = stim.x - reducedSize;
         const stimRight = stim.x + reducedSize;
@@ -211,6 +216,9 @@ function handleClick(event) {
 }
 
 function handleSpacebarPress(event) {
+    // Ignore if trial is inactive
+    if (!trialActive || event.code !== "Space") return;
+    
     if (event.code === "Space" && !spacePress) {
         spacePress = true;
 
@@ -239,13 +247,90 @@ function showFeedback(isCorrect) {
     // console.log("Feedback displayed:", isCorrect ? "Correct" : "Incorrect");
 }
 
+// ================
+// Hover Circle
+// ================
+
+let hintHovered = false;
+let hoverStartTime = null;
+
+function drawCenterHint() {
+    ctx.save();
+
+    // Draw hover instructions
+    ctx.fillStyle = "#000000";
+    ctx.beginPath();
+    ctx.arc(canvas.width/ 2, canvas.height / 2, CONFIG.display.HINT_CIRCLE_RADIUS * 2, 0, 2 * Math.PI); // Diameter of the circle
+    ctx.fill();
+
+    // Hover instructions
+    ctx.font = "12px Arial";
+    ctx.fillStyle = "#818589"; // Gray
+    let hoverCircleInstructions = "Hover cursor over circle to start next trial";
+    ctx.textAlign = "center";
+    ctx.fillText(hoverCircleInstructions, canvas.width / 2, canvas.height / 2 - 15); // Positions text over circle
+
+    ctx.restore();
+}
+
+function handleCircleHover(event) {
+    // draws starting hover circle, then renders stimuli when hover condition is met
+
+    // Get the canvas boundaries
+    const rect = canvas.getBoundingClientRect();
+
+    // Calculate the current mouse position relative to the canvas
+    const mouseX = event.clientX - rect.left;
+    const mouseY = event.clientY - rect.top;
+    
+    // Define the center of the circle and its radius
+    // The radius is twice the size of the displayed circle for a more forgiving hover detection area
+    const circleCenterX = canvas.width / 2;
+    const circleCenterY = canvas.height / 2;
+    const circleRadius = CONFIG.display.HINT_CIRCLE_RADIUS * 2; 
+
+    // Calculate the distance between the mouse pointer and the center of the circle
+    const distanceFromCenter = Math.sqrt((mouseX - circleCenterX) ** 2 + (mouseY - circleCenterY) ** 2);
+    
+    // Check if the distance calculated is less than or equal to the circle's radius
+    if (distanceFromCenter <= circleRadius) {
+        // If it is the first time the mouse has hovered over the circle during this check
+        if (!hintHovered) {
+            hintHovered = true;
+            hoverStartTime = new Date().getTime(); // Record the hover start time
+        } 
+        // If the mouse has been hovering over the circle
+        else {
+            const currentTime = new Date().getTime();
+            
+            // Calculate the total hover time
+            const elapsed = currentTime - hoverStartTime;    
+            
+            // If the hover time exceeds the specified duration, render stimuli
+            if (elapsed >= CONFIG.display.HOVER_DURATION) {
+                canvas.removeEventListener('mousemove', handleCircleHover);
+                ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+                setTimeout(() => {
+                    renderStimuli(); // Call the function to render stimuli
+                }, CONFIG.display.DELAY_BEFORE_TRIAL);
+            }
+        }
+    } 
+    // If the mouse is outside the circle, reset the hovered state
+    else {
+        hintHovered = false;
+    }
+}
+
 // ======================
 // Start and End Trials
 // ======================
 
 function startTask() {
+    trialActive = true; // Clicks and presses are allowed
     clickedLocations = [];
     mouseTrajectory = [];
+    
     if (experimentStartTime === null) {
         experimentStartTime = Date.now();
         console.log("Experiment start time:", experimentStartTime);
@@ -314,12 +399,19 @@ function endTrial() {
     // Reset dwell time tracking variables
     lastHoveredStimIndex = null;
     entryTime = null;
+    trialActive = false; // Ignore any clicks or presses till next trial
 
+    // Log data
     logCounter++;
     const trialData = logTrialData();
     spacePress = false;
     previousTrialCorrect = trialCorrect;
-    setTimeout(startBlock, 1000);
+    
+    // Don't start trial without hover circle
+    setTimeout(() => {
+        canvas.removeEventListener("mousemopve", handleCircleHover);
+        startBlock(); // Initialize next trial
+    }, CONFIG.display.MIN_FEEDBACK_DURATION);
 }
 
 // ============================
@@ -602,6 +694,9 @@ function startBlock() {
         } else {
             iBlock++;  // Increment block counter
             iTrial = 0;  // Reset trial counter for the new block
+            drawCenterHint();
+            previousTrialCorrect = null;
+            canvas.addEventListener("mousemove", handleCircleHoverEndBlock);
 
             let message = "";
             if (iBlock < expStruct.length) {
@@ -640,4 +735,140 @@ function startBlock() {
             };
         }
     }
+}
+
+function handleCircleHoverEndBlock(event) {
+    // Get the canvas boundaries
+    const rect = canvas.getBoundingClientRect();
+
+    // Calculate the current mouse position relative to the canvas
+    const mouseX = event.clientX - rect.left;
+    const mouseY = event.clientY - rect.top;
+    
+    // Define the center of the circle and its radius
+    const circleCenterX = canvas.width / 2;
+    const circleCenterY = canvas.height / 2;
+    const circleRadius = CONFIG.display.HINT_CIRCLE_RADIUS * 2; 
+
+    // Calculate the distance between the mouse pointer and the center of the circle
+    const distanceFromCenter = Math.sqrt((mouseX - circleCenterX) ** 2 + (mouseY - circleCenterY) ** 2);
+    
+    // Check if the distance calculated is less than or equal to the circle's radius
+    if (distanceFromCenter <= circleRadius) {
+        // If it is the first time the mouse has hovered over the circle during this check
+        if (!hintHovered) {
+            hintHovered = true;
+            hoverStartTime = new Date().getTime(); // Record the hover start time
+        } 
+        // If the mouse has been hovering over the circle
+        else {
+            const currentTime = new Date().getTime();
+            
+            // Calculate the total hover time
+            const elapsed = currentTime - hoverStartTime;    
+            
+            // If the hover time exceeds the specified duration, show the end-of-block message
+            if (elapsed >= CONFIG.display.HOVER_DURATION) {
+                canvas.removeEventListener('mousemove', handleCircleHoverEndBlock);
+                ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+                
+                // Show the end-of-block message
+                showEndBlockMessage();
+            }
+        }
+    } 
+    // If the mouse is outside the circle, reset the hovered state
+    else {
+        hintHovered = false;
+    }
+}
+
+function showEndBlockMessage() {
+    // Prepare the message
+    let message = ``;
+    if (iBlock < expStruct.length) {
+        if (expStruct[iBlock-1].isPractice) { // if previous block was practice
+            message += `Practice block ${iBlock} out of ${CONFIG.experimentDesign.N_PRACTICE_BLOCKS} completed!`
+            if (expStruct[iBlock].isPractice == 0) {
+                message += `\n\n*** IMPORTANT: The main experiment starts in the next block. ***`;
+                message += `\n*** You will not receive feedback for your clicks anymore. ***\n\n`;
+            }
+            message += `\nBlocks left: ${expStruct.length - iBlock}.`;
+            message += `\nPress any key to continue.`;
+        } else {
+            message += `You have completed experiment block ${iBlock-CONFIG.experimentDesign.N_PRACTICE_BLOCKS} out of ${CONFIG.experimentDesign.N_BLOCKS}`
+            message += `\nBlocks left: ${expStruct.length - iBlock}.`;
+            message += `\nPress any key to continue.`;
+        }
+    } else {
+        message += `\nNo more blocks left!`;
+        message += `\nPress the next button to continue.`;
+
+        expTrialsEndTime = Date.now();
+        expTrialsDuration = expTrialsEndTime - expTrialsStartTime;
+        data.expTrialsDuration = expTrialsDuration;
+        console.log("expTrialsDuration logged");
+
+        // Show the demographics button
+        show_startDemosButton();
+        //sendData(data);  // Sending data after demos submission instead
+    }
+
+    // Set the default font options
+    ctx.font = '16px Arial';
+    ctx.fillStyle = 'black';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Split the message by newline and draw each line separately
+    const lines = message.split('\n');
+    lines.forEach((line, index) => {
+        // Check if the line is the special message and apply styles accordingly
+        if (line.includes('***')) {
+            ctx.font = '16px Arial';
+            ctx.fillStyle = 'red';
+        } else {
+            ctx.font = '16px Arial';
+            ctx.fillStyle = 'black';
+        }
+        ctx.fillText(line, canvas.width / 2, canvas.height / 2 + (index - (lines.length - 1) / 2) * 20);
+        // Reset font and color back to defaults
+        ctx.font = '16px Arial';
+        ctx.fillStyle = 'black';
+    });
+
+    // Listen for a keypress event to continue
+    window.addEventListener('keypress', function onKeypress() {
+        window.removeEventListener('keypress', onKeypress);
+        startBlock();
+    });
+}
+function startTrial() {
+    // Initializes trial
+    if (!expStruct[iBlock].isPractice) {
+        // clear feedback for experiment blocks
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (!firstExperimentBlockStarted) {
+            expTrialsStartTime = Date.now(); // time in milliseconds for ease of duration calculation
+            data.expTrialsStartTime = expTrialsStartTime;
+            firstExperimentBlockStarted = true;
+        }
+    }
+
+    currentTrial = expStruct[iBlock].trials[iTrial]; 
+    
+    // Reset trial flags
+    hasClicked = false; // Allow clicking for the new trial
+    trialEnded = false;
+    timeoutReached = false; // Reset the timeout flag at the start of each trial
+    clearTimeout(searchTimer);
+    prematurePresses = 0; // Reset premature spacebar press count
+    screenSizeWarningTriggered = false; // Reset screensize warning flag
+    clickedLocations = [];
+    mouseTrajectory = [];
+
+    // Draw the hover circle and wait for hover condition to be met before rendering stimuli
+    drawCenterHint();
+    canvas.addEventListener('mousemove', handleCircleHover);
 }
