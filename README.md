@@ -1,4 +1,4 @@
-~ 02.03.2025
+~ 02.16.2025
 
 This code is for a project with the GW Viscog Lab using a T's and L's search task with a foveation mask.
 
@@ -6,14 +6,6 @@ The foveation mask is meant to partially obscure stimuli. It is accompanied by a
 
 If the code looks dumb and stupid and bad, it's because it is.
 
-When you see a T, click on it. If you don't see any T's, press the spacebar.
-
 My next steps will be: 
 
-(1) Adding participant instructions for reporting targets and no-target trials, 
-
-(2) Requiring participants to center cursor between trials, 
-
-(3) Set a min. time between trials (Spamming the spacebar kinda breaks everything), 
-
-(4) Maybe making the L's offset a bit to vary distractor similarity to target?
+(1) Figuring out how on Earth one actually collects data
