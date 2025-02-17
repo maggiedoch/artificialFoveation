@@ -113,14 +113,11 @@ function logTrialData() {
     const setSize = currentTrial.setSize;
     const totalSearchTime = trialEndTime - trialStartTime;
     const hitCount = currentTrial.stimuli.filter(
-        stim => stim.clickCount > 0 && stim.isTarget).length;
+        stim => stim.clickCount > 0 && stim.targetCond === 1).length;
     const faCount = currentTrial.stimuli.filter(
-        stim => stim.clickCount > 0 && !stim.isTarget).length;
+        stim => stim.clickCount > 0 && stim.targetCond !== 1).length;
     const missCount = currentTrial.stimuli.filter(
-        stim => stim.clickCount === 0 && stim.isTarget && 
-        !trialCorrect).length;
-    const correctRejectionCount = (trialCorrect &&
-        currentTrial.stimuli.every(stim => stim.clickCount === 0)) ? 1 : 0;
+        stim => stim.clickCount === 0 && stim.targetCond === 1).length;
     const allClicks = clickedLocations.map((click, index) => {
         return {
             x: click.x,
@@ -159,7 +156,6 @@ function logTrialData() {
         isOutlierRT,
         hitCount,
         faCount,
-        correctRejectionCount,
         missCount,
         trialCorrect,
         previousTrialCorrect,
