@@ -831,7 +831,7 @@ function startTrial() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         if (!firstExperimentBlockStarted) {
-            expTrialsStartTime = Date.now(); // time in milliseconds for ease of duration calculation
+            let expTrialsStartTime = Date.now(); // time in milliseconds for ease of duration calculation
             data.expTrialsStartTime = expTrialsStartTime;
             firstExperimentBlockStarted = true;
         }
