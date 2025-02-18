@@ -780,25 +780,24 @@ function handleCircleHoverEndBlock(event) {
 }
 
 function showEndBlockMessage() {
-    // Prepare the message
     let message = ``;
     if (iBlock < expStruct.length) {
-        if (expStruct[iBlock-1].isPractice) { // if previous block was practice
-            message += `Practice block ${iBlock} out of ${CONFIG.experimentDesign.N_PRACTICE_BLOCKS} completed!`
+        if (expStruct[iBlock - 1].isPractice) { // If previous block was practice
+            message += `Practice block ${iBlock} out of ${CONFIG.experimentDesign.N_PRACTICE_BLOCKS} completed!`;
             if (expStruct[iBlock].isPractice == 0) {
-                message += `\n\n*** IMPORTANT: The main experiment starts in the next block. ***`;
-                message += `\n*** You will not receive feedback for your clicks anymore. ***\n\n`;
+                message += `<br><br><strong style="color:red;">IMPORTANT: The main experiment starts in the next block.</strong>`;
+                message += `<br><strong style="color:red;">You will not receive feedback for your clicks anymore.</strong><br><br>`;
             }
-            message += `\nBlocks left: ${expStruct.length - iBlock}.`;
-            message += `\nPress any key to continue.`;
+            message += `<br>Blocks left: ${expStruct.length - iBlock}.`;
+            message += `<br>Press any key to continue.`;
         } else {
-            message += `You have completed experiment block ${iBlock-CONFIG.experimentDesign.N_PRACTICE_BLOCKS} out of ${CONFIG.experimentDesign.N_BLOCKS}`
-            message += `\nBlocks left: ${expStruct.length - iBlock}.`;
-            message += `\nPress any key to continue.`;
+            message += `You have completed experiment block ${iBlock - CONFIG.experimentDesign.N_PRACTICE_BLOCKS} out of ${CONFIG.experimentDesign.N_BLOCKS}.`;
+            message += `<br>Blocks left: ${expStruct.length - iBlock}.`;
+            message += `<br>Press any key to continue.`;
         }
     } else {
-        message += `\nNo more blocks left!`;
-        message += `\nPress the next button to continue.`;
+        message += `<br>No more blocks left!`;
+        message += `<br>Press the next button to continue.`;
 
         expTrialsEndTime = Date.now();
         expTrialsDuration = expTrialsEndTime - expTrialsStartTime;
@@ -807,38 +806,24 @@ function showEndBlockMessage() {
 
         // Show the demographics button
         show_startDemosButton();
-        //sendData(data);  // Sending data after demos submission instead
+        // sendData(data);  // Sending data after demos submission instead
     }
 
-    // Set the default font options
-    ctx.font = '16px Arial';
-    ctx.fillStyle = 'black';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    // Split the message by newline and draw each line separately
-    const lines = message.split('\n');
-    lines.forEach((line, index) => {
-        // Check if the line is the special message and apply styles accordingly
-        if (line.includes('***')) {
-            ctx.font = '16px Arial';
-            ctx.fillStyle = 'red';
-        } else {
-            ctx.font = '16px Arial';
-            ctx.fillStyle = 'black';
-        }
-        ctx.fillText(line, canvas.width / 2, canvas.height / 2 + (index - (lines.length - 1) / 2) * 20);
-        // Reset font and color back to defaults
-        ctx.font = '16px Arial';
-        ctx.fillStyle = 'black';
-    });
+    // Update the div content
+    const messageDiv = document.getElementById("end-block-message");
+    messageDiv.innerHTML = message;
+    messageDiv.style.display = "block"; // Show the message
 
     // Listen for a keypress event to continue
-    window.addEventListener('keypress', function onKeypress() {
-        window.removeEventListener('keypress', onKeypress);
-        startBlock();
-    });
+    function onKeypress() {
+        messageDiv.style.display = "none"; // Hide message on keypress
+        window.removeEventListener("keypress", onKeypress);
+        startBlock(); // Start the next block
+    }
+
+    window.addEventListener("keypress", onKeypress);
 }
+
 function startTrial() {
     // Initializes trial
     if (!expStruct[iBlock].isPractice) {
