@@ -680,7 +680,7 @@ function showTask() {
 
 function startBlock() {
     clearDisplay();
-    const messageBox = document.getElementById("end-block-message");
+    const messageBox = document.getElementById("message-box");
     if (iBlock < expStruct.length) {
         if (iTrial < expStruct[iBlock].trials.length) {
             messageBox.style.display = "none"; // Hide message
@@ -810,7 +810,7 @@ function showEndBlockMessage() {
     }
 
     // Update the div content
-    const messageDiv = document.getElementById("end-block-message");
+    const messageDiv = document.getElementById("message-box");
     messageDiv.innerHTML = message;
     messageDiv.style.display = "block"; // Show the message
 
