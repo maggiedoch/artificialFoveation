@@ -793,7 +793,7 @@ function showEndBlockMessage() {
             message += `<br>Press any key to continue.`;
         } else {
             message += `You have completed experiment block ${iBlock - CONFIG.experimentDesign.N_PRACTICE_BLOCKS} out of ${CONFIG.experimentDesign.N_BLOCKS}.`;
-            message += `<br>Blocks left: ${expStruct.length - iBlock}.`;
+            message += `<br><br>Blocks left: ${expStruct.length - iBlock}.`;
             message += `<br>Press any key to continue.`;
         }
     } else {
