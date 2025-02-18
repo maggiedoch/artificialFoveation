@@ -781,7 +781,7 @@ function handleCircleHoverEndBlock(event) {
 
 function showEndBlockMessage() {
     let message = ``;
-    if (iBlock < expStruct.length) {
+    if (iBlock <= expStruct.length) {
         if (expStruct[iBlock - 1].isPractice) { // If previous block was practice
             message += `Practice block ${iBlock} out of ${CONFIG.experimentDesign.N_PRACTICE_BLOCKS} completed!`;
             if (expStruct[iBlock].isPractice == 0) {
