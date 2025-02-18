@@ -218,10 +218,19 @@
         color:black;">
     </div>
     <div id="end-block-message" style="
-        display: none; 
-        font-size: 14px; 
-        text-align: center; 
-        margin-top: 14px;">
+        display: none; /* Hidden initially */
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 60%;
+        padding: 20px;
+        background: white;
+        border: 2px solid black;
+        text-align: center;
+        font-size: 16px;
+        font-family: Arial, sans-serif;
+        z-index: 3;"> 
     </div>
     <script src = "experimentDesign.js"></script>
     <script src = "showInstructions.js"></script>
