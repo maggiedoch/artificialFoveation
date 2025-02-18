@@ -680,7 +680,7 @@ function showTask() {
 
 function startBlock() {
     clearDisplay();
-    const messageBox = document.getElementById("message-box");
+    const messageBox = document.getElementById("end-block-message");
     if (iBlock < expStruct.length) {
         if (iTrial < expStruct[iBlock].trials.length) {
             messageBox.style.display = "none"; // Hide message
