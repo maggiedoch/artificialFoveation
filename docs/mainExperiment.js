@@ -711,7 +711,7 @@ function startBlock() {
                 message = `<br><b>Experiment complete!</b><br>Press the next button to continue.`;
 
                 expTrialsEndTime = Date.now();
-                expTrialsDuration = expTrialsEndTime - expTrialsStartTime;
+                expTrialsDuration = expTrialsEndTime - experimentStartTime; // previously was expTrialsStartTime
                 data.expTrialsDuration = expTrialsDuration;
                 console.log("expTrialsDuration logged");
 
