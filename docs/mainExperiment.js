@@ -786,7 +786,7 @@ function showEndBlockMessage() {
             message += `Practice block ${iBlock} out of ${CONFIG.experimentDesign.N_PRACTICE_BLOCKS} completed!`;
             if (expStruct[iBlock].isPractice == 0) {
                 message += `<br><br><strong style="color:red;">IMPORTANT: The main experiment starts in the next block.</strong>`;
-                message += `<br><strong style="color:red;">You will not receive feedback for your clicks anymore.</strong><br><br>`;
+                // message += `<br><strong style="color:red;">You will not receive feedback for your clicks anymore.</strong><br><br>`;
             }
             message += `<br>Blocks left: ${expStruct.length - iBlock}.`;
             message += `<br>Press any key to continue.`;
