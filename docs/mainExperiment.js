@@ -712,7 +712,7 @@ function startBlock() {
 
                 expTrialsEndTime = Date.now();
                 expTrialsDuration = expTrialsEndTime - experimentStartTime; // previously was expTrialsStartTime
-                data.expTrialsDuration = expTrialsDuration;
+                // data.expTrialsDuration = expTrialsDuration;
                 console.log("expTrialsDuration logged");
 
                 //show_startDemosButton();
