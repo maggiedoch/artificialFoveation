@@ -251,22 +251,11 @@ let hintHovered = false;
 let hoverStartTime = null;
 
 function drawCenterHint() {
-    ctx.save();
+    const hintContainer = document.getElementById("centerHintContainer");
+    const hintCircle = document.getElementById("centerHintCircle");
+    const hintText = document.getElementById("centerHintText");
 
-    // Draw hover instructions
-    ctx.fillStyle = "#000000";
-    ctx.beginPath();
-    ctx.arc(canvas.width/ 2, canvas.height / 2, CONFIG.display.HINT_CIRCLE_RADIUS * 2, 0, 2 * Math.PI); // Diameter of the circle
-    ctx.fill();
-
-    // Hover instructions
-    ctx.font = "12px Arial";
-    ctx.fillStyle = "#5c1a75"; // Purple
-    let hoverCircleInstructions = "Hover cursor over circle to start next trial";
-    ctx.textAlign = "center";
-    ctx.fillText(hoverCircleInstructions, canvas.width / 2, canvas.height / 2 - 15); // Positions text over circle
-
-    ctx.restore();
+    hintContainer.style.display = "block";
 }
 
 function handleCircleHover(event) {
@@ -323,6 +312,9 @@ function handleCircleHover(event) {
 // ======================
 
 function startTask() {
+    // Hide the hover circle
+    document.getElementById("centerHintContainer").style.display = "none";
+    
     trialActive = true; // Clicks and presses are allowed
     clickedLocations = [];
     mouseTrajectory = [];
@@ -404,6 +396,7 @@ function endTrial() {
     previousTrialCorrect = trialCorrect;
     
     // Don't start trial without hover circle
+    drawCenterHint();
     setTimeout(() => {
         canvas.removeEventListener("mousemopve", handleCircleHover);
         startBlock(); // Initialize next trial
