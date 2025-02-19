@@ -258,53 +258,31 @@ function drawCenterHint() {
     hintContainer.style.display = "block";
 }
 
-function handleCircleHover(event) {
-    // draws starting hover circle, then renders stimuli when hover condition is met
-
-    // Get the canvas boundaries
-    const rect = canvas.getBoundingClientRect();
-
-    // Calculate the current mouse position relative to the canvas
-    const mouseX = event.clientX - rect.left;
-    const mouseY = event.clientY - rect.top;
-    
-    // Define the center of the circle and its radius
-    // The radius is twice the size of the displayed circle for a more forgiving hover detection area
-    const circleCenterX = canvas.width / 2;
-    const circleCenterY = canvas.height / 2;
-    const circleRadius = CONFIG.display.HINT_CIRCLE_RADIUS * 2; 
-
-    // Calculate the distance between the mouse pointer and the center of the circle
-    const distanceFromCenter = Math.sqrt((mouseX - circleCenterX) ** 2 + (mouseY - circleCenterY) ** 2);
-    
-    // Check if the distance calculated is less than or equal to the circle's radius
-    if (distanceFromCenter <= circleRadius) {
-        // If it is the first time the mouse has hovered over the circle during this check
-        if (!hintHovered) {
-            hintHovered = true;
-            hoverStartTime = new Date().getTime(); // Record the hover start time
-        } 
-        // If the mouse has been hovering over the circle
-        else {
-            const currentTime = new Date().getTime();
-            
-            // Calculate the total hover time
-            const elapsed = currentTime - hoverStartTime;    
-            
-            // If the hover time exceeds the specified duration, render stimuli
-            if (elapsed >= CONFIG.display.HOVER_DURATION) {
-                canvas.removeEventListener('mousemove', handleCircleHover);
-                ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
-                setTimeout(() => {
-                    renderStimuli(); // Call the function to render stimuli
-                }, CONFIG.display.DELAY_BEFORE_TRIAL);
-            }
-        }
+function handleCircleHover() {
+    // If it is the first time the mouse has hovered over the circle
+    if (!hintHovered) {
+        hintHovered = true;
+        hoverStartTime = new Date().getTime(); // Record the hover start time
     } 
-    // If the mouse is outside the circle, reset the hovered state
-    else {
-        hintHovered = false;
-    }
+
+    // Check after a short delay if the hover condition is met
+    setTimeout(() => {
+        const currentTime = new Date().getTime();
+        const elapsed = currentTime - hoverStartTime;
+
+        if (elapsed >= CONFIG.display.HOVER_DURATION) {
+            // Remove event listener after successful hover
+            document.getElementById("centerHintCircle").removeEventListener("mouseenter", handleCircleHover);
+
+            // Hide the hint circle
+            document.getElementById("centerHintContainer").style.display = "none";
+
+            // Start the next trial after a delay
+            setTimeout(() => {
+                startBlock();
+            }, CONFIG.display.DELAY_BEFORE_TRIAL);
+        }
+    }, CONFIG.display.HOVER_DURATION);
 }
 
 // ======================
@@ -398,8 +376,8 @@ function endTrial() {
     // Don't start trial without hover circle
     drawCenterHint();
     setTimeout(() => {
-        canvas.removeEventListener("mousemopve", handleCircleHover);
-        startBlock(); // Initialize next trial
+        document.getElementById("centerHintCircle").addEventListener("mouseenter", handleCircleHover);
+        // startBlock();
     }, CONFIG.display.MIN_FEEDBACK_DURATION);
 }
 
