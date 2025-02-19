@@ -154,3 +154,36 @@ canvas {
     text-align: center;
     display: none;
 }
+
+/* HOVER CIRCLE */
+
+#centerHintContainer {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    align-items: center;
+    z-index: 3;
+}
+
+#centerHintCircle {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: black;
+    border-radius: 50%;
+    z-index: 3;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+#centerHintText {
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    color: #5c1a75;
+    margin-bottom: 50px;
+    text-align: center;
+    z-index: 3;
+}
