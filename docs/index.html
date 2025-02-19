@@ -212,11 +212,15 @@
         <canvas id="foveation-mask" width="800" height="600" style="pointer-events: none;"></canvas>
     </div>
     <div id="cursor-position"></div>
+
+    <!-- Feedback -->
     <div id="feedback-box" style="
         margin-top: 20px; 
         font-size: 18px; 
         color:black;">
     </div>
+
+    <!-- Between-block messages -->
     <div id="message-box" style="
         display: none; /* Hidden initially */
         position: absolute;
@@ -232,6 +236,14 @@
         font-family: Arial, sans-serif;
         z-index: 3;"> 
     </div>
+
+    <!-- Hover circle -->
+    <div id="centerHintContainer">
+        <p id="centerHintText">Hover cursor over circle to start next trial</p>
+        <div id="centerHintCircle"></div>
+    </div>
+
+    <!-- Script sources -->
     <script src = "experimentDesign.js"></script>
     <script src = "showInstructions.js"></script>
     <script src="mainExperiment.js"></script>
