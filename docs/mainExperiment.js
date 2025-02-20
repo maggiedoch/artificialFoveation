@@ -183,29 +183,58 @@ function handleClick(event) {
     const clickY = event.clientY - rect.top;
     let clickedStimulus = null;
 
-    if (!trialActive) return; // Ignore extra clicks if trial over
-    
-    for (let stim of stimulusCoordinates) {
-        const stimLeft = stim.x - reducedSize;
-        const stimRight = stim.x + reducedSize;
-        const stimTop = stim.y - reducedSize;
-        const stimBottom = stim.y + reducedSize;
+    if (!trialActive) return; // Ignore extra clicks if trial is over
+
+    for (let stim of currentTrial.stimuli) {
+        const stimLeft = stim.xpos - reducedSize;
+        const stimRight = stim.xpos + reducedSize;
+        const stimTop = stim.ypos - reducedSize;
+        const stimBottom = stim.ypos + reducedSize;
 
         if (clickX >= stimLeft && clickX <= stimRight && clickY >= stimTop && clickY <= stimBottom) {
             clickedStimulus = stim;
-            break;
+
+            // **Ensure clickCount exists before incrementing**
+            if (clickedStimulus.clickCount === undefined) {
+                clickedStimulus.clickCount = 0;
+            }
+            clickedStimulus.clickCount++; // Increment click count
+            break; // Exit loop after finding the clicked stimulus
         }
     }
 
-    if (!clickedStimulus) {
+    if (clickedStimulus) {
+        // **Record click details for valid stimulus**
+        clickedLocations.push({
+            x: clickX,
+            y: clickY,
+            correct: clickedStimulus.targetCond === 1, // True if stimulus is a target
+            time: new Date().getTime() - trialStartTime,
+            clickCount: clickedStimulus.clickCount, // Store updated click count
+            stimIndex: clickedStimulus.stimIndex,
+            targetCond: clickedStimulus.targetCond,
+            salience: clickedStimulus.salience || null, // Default to null if not defined
+            offset: clickedStimulus.offset || null,
+            rotation: clickedStimulus.rotation || null,
+        });
+
+        trialCorrect = clickedStimulus.targetCond === 1; // Fix incorrect variable
+        showFeedback(trialCorrect);
+    } else {
+        // **Record click details for a miss**
         console.log("Click did not match any stimulus!");
+        clickedLocations.push({
+            x: clickX,
+            y: clickY,
+            correct: 0, // False for incorrect clicks
+            time: new Date().getTime() - trialStartTime,
+        });
+
         showFeedback(false);
-        endTrial();
-        return;
     }
 
-    trialCorrect = clickedStimulus.isTarget;
-    showFeedback(trialCorrect);
+    console.log(clickedLocations)
+
     endTrial();
 }
 
@@ -484,7 +513,7 @@ function renderStimuli(currentTrial) {
             drawL(x, y, color, rotation, CONFIG.stimuli.BAR_WIDTH / 2); // Adjust offset if necessary
         }
 
-        // Store stimulus coordinates for tracking
+        // Store stimulus coordinates for foveation mask
         stimulusCoordinates.push({ x, y, isTarget });
     }
 
