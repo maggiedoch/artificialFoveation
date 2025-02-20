@@ -1,5 +1,3 @@
-// postErrorExperiment.js
-
 // =========================
 // Global Initializations
 // =========================
@@ -250,31 +248,6 @@ function showFeedback(isCorrect) {
 let hintHovered = false;
 let hoverStartTime = null;
 
-// function drawCenterHint() {
-//     const hintContainer = document.getElementById("centerHintContainer");
-//     const hintCircle = document.getElementById("centerHintCircle");
-
-//     // Get the foveation mask size & position
-//     const maskRect = maskCanvas.getBoundingClientRect();
-
-//     // Calculate the center position of the foveation mask
-//     const maskCenterX = maskRect.left + maskRect.width / 2;
-//     const maskCenterY = maskRect.top + maskRect.height / 2;
-
-//     // Adjust hint container position to match the center of the foveation mask
-//     hintContainer.style.left = `${maskCenterX - hintContainer.offsetWidth / 2}px`;
-//     hintContainer.style.top = `${maskCenterY - hintContainer.offsetHeight / 2}px`;
-
-//     // **Redraw the foveation mask without '+' markers**
-//     drawFoveationMaskWithoutLocal(cursorX, cursorY);
-
-//     // Show the hover circle
-//     hintContainer.style.display = "block";
-
-//     // Attach hover listener
-//     hintCircle.addEventListener("mouseenter", handleCircleHover);
-// }
-
 function drawCenterHint() {
     // **Ensure the foveation mask is hidden**
     document.getElementById("foveation-mask").style.display = "none"; 
@@ -306,51 +279,6 @@ function drawCenterHint() {
 
     canvas.addEventListener('mousemove', handleCircleHover);
 }
-
-
-// function handleCircleHover(event) {
-//     const hintCircle = document.getElementById("centerHintCircle");
-
-//     // Get the hover circle position & size
-//     const hintRect = hintCircle.getBoundingClientRect();
-//     const circleCenterX = hintRect.left + hintRect.width / 2;
-//     const circleCenterY = hintRect.top + hintRect.height / 2;
-//     const circleRadius = hintRect.width / 2; // Assuming it's a square
-
-//     // Get mouse position
-//     const mouseX = event.clientX;
-//     const mouseY = event.clientY;
-
-//     // Calculate distance from mouse to center of hover circle
-//     const distanceFromCenter = Math.sqrt((mouseX - circleCenterX) ** 2 + (mouseY - circleCenterY) ** 2);
-
-//     // Check if mouse is inside the circle
-//     if (distanceFromCenter <= circleRadius) {
-//         if (!hintHovered) {
-//             hintHovered = true;
-//             hoverStartTime = Date.now(); // Record hover start time
-//         }
-
-//         // Check if hover duration is met
-//         setTimeout(() => {
-//             const elapsed = Date.now() - hoverStartTime;
-
-//             if (elapsed >= CONFIG.display.HOVER_DURATION) {
-//                 document.getElementById("centerHintCircle").removeEventListener("mousemove", handleCircleHover);
-                
-//                 // Hide the hint and clear the display
-//                 document.getElementById("centerHintContainer").style.display = "none";
-
-//                 setTimeout(() => {
-//                     renderStimuli(currentTrial); // Now draw stimuli
-//                 }, CONFIG.display.DELAY_BEFORE_TRIAL);
-//             }
-//         }, CONFIG.display.HOVER_DURATION);
-//     } else {
-//         // Reset hover detection if the mouse moves out of the circle
-//         hintHovered = false;
-//     }
-// }
 
 function handleCircleHover(event) {
     // draws starting hover circle, then renders stimuli when hover condition is met
@@ -671,16 +599,6 @@ function drawFoveationMask(cursorX, cursorY) {
     stimulusCoordinates.forEach(({ x, y }) => {
         maskCtx.fillText("+", x, y);
     });
-
-    // **Erase foveation region at cursor location**
-    eraseFoveation(cursorX, cursorY, maskCtx);
-}
-
-function drawFoveationMaskWithoutLocal(cursorX, cursorY) {    
-    // **Global mask layer (fully opaque)**
-    maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height); 
-    maskCtx.fillStyle = "rgb(229, 231, 233)";  // Light gray with no transparency
-    maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);  
 
     // **Erase foveation region at cursor location**
     eraseFoveation(cursorX, cursorY, maskCtx);
