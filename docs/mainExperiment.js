@@ -250,50 +250,172 @@ function showFeedback(isCorrect) {
 let hintHovered = false;
 let hoverStartTime = null;
 
-function drawCenterHint() {
-    const hintContainer = document.getElementById("centerHintContainer");
-    const hintCircle = document.getElementById("centerHintCircle");
-    const hintText = document.getElementById("centerHintText");
+// function drawCenterHint() {
+//     const hintContainer = document.getElementById("centerHintContainer");
+//     const hintCircle = document.getElementById("centerHintCircle");
 
-    hintContainer.style.display = "block";
+//     // Get the foveation mask size & position
+//     const maskRect = maskCanvas.getBoundingClientRect();
+
+//     // Calculate the center position of the foveation mask
+//     const maskCenterX = maskRect.left + maskRect.width / 2;
+//     const maskCenterY = maskRect.top + maskRect.height / 2;
+
+//     // Adjust hint container position to match the center of the foveation mask
+//     hintContainer.style.left = `${maskCenterX - hintContainer.offsetWidth / 2}px`;
+//     hintContainer.style.top = `${maskCenterY - hintContainer.offsetHeight / 2}px`;
+
+//     // **Redraw the foveation mask without '+' markers**
+//     drawFoveationMaskWithoutLocal(cursorX, cursorY);
+
+//     // Show the hover circle
+//     hintContainer.style.display = "block";
+
+//     // Attach hover listener
+//     hintCircle.addEventListener("mouseenter", handleCircleHover);
+// }
+
+function drawCenterHint() {
+    // **Ensure the foveation mask is hidden**
+    document.getElementById("foveation-mask").style.display = "none"; 
+
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+
+    // **Show the cursor inside the box-container**
+    document.getElementById("box-container").style.cursor = "default";  
+
+    // **Fill the entire canvas with gray (same as foveation mask)**
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "rgb(229, 231, 233)"; // Gray background
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // **Draw the hover circle**
+    ctx.fillStyle = "rgb(0, 0, 0)"; // Black
+    ctx.beginPath();
+    ctx.arc(canvas.width / 2, canvas.height / 2, CONFIG.display.HINT_CIRCLE_RADIUS * 2, 0, 2 * Math.PI);
+    ctx.fill();
+
+    // **Draw hover instruction text**
+    ctx.font = "12px Arial";  
+    ctx.fillStyle = "#818589";  // Grayish text
+    ctx.textAlign = "center";
+    ctx.fillText("Hover cursor over circle to start next trial", canvas.width / 2, canvas.height / 2 - 15); 
+
+    ctx.restore();
+
+    canvas.addEventListener('mousemove', handleCircleHover);
 }
 
-function handleCircleHover() {
-    // If it is the first time the mouse has hovered over the circle
-    if (!hintHovered) {
-        hintHovered = true;
-        hoverStartTime = new Date().getTime(); // Record the hover start time
-    } 
 
-    // Check after a short delay if the hover condition is met
-    setTimeout(() => {
-        const currentTime = new Date().getTime();
-        const elapsed = currentTime - hoverStartTime;
+// function handleCircleHover(event) {
+//     const hintCircle = document.getElementById("centerHintCircle");
 
-        if (elapsed >= CONFIG.display.HOVER_DURATION) {
-            // Remove event listener after successful hover
-            document.getElementById("centerHintCircle").removeEventListener("mouseenter", handleCircleHover);
+//     // Get the hover circle position & size
+//     const hintRect = hintCircle.getBoundingClientRect();
+//     const circleCenterX = hintRect.left + hintRect.width / 2;
+//     const circleCenterY = hintRect.top + hintRect.height / 2;
+//     const circleRadius = hintRect.width / 2; // Assuming it's a square
 
-            // Hide the hint circle
-            document.getElementById("centerHintContainer").style.display = "none";
+//     // Get mouse position
+//     const mouseX = event.clientX;
+//     const mouseY = event.clientY;
 
-            // Start the next trial after a delay
-            setTimeout(() => {
-                startBlock();
-            }, CONFIG.display.DELAY_BEFORE_TRIAL);
+//     // Calculate distance from mouse to center of hover circle
+//     const distanceFromCenter = Math.sqrt((mouseX - circleCenterX) ** 2 + (mouseY - circleCenterY) ** 2);
+
+//     // Check if mouse is inside the circle
+//     if (distanceFromCenter <= circleRadius) {
+//         if (!hintHovered) {
+//             hintHovered = true;
+//             hoverStartTime = Date.now(); // Record hover start time
+//         }
+
+//         // Check if hover duration is met
+//         setTimeout(() => {
+//             const elapsed = Date.now() - hoverStartTime;
+
+//             if (elapsed >= CONFIG.display.HOVER_DURATION) {
+//                 document.getElementById("centerHintCircle").removeEventListener("mousemove", handleCircleHover);
+                
+//                 // Hide the hint and clear the display
+//                 document.getElementById("centerHintContainer").style.display = "none";
+
+//                 setTimeout(() => {
+//                     renderStimuli(currentTrial); // Now draw stimuli
+//                 }, CONFIG.display.DELAY_BEFORE_TRIAL);
+//             }
+//         }, CONFIG.display.HOVER_DURATION);
+//     } else {
+//         // Reset hover detection if the mouse moves out of the circle
+//         hintHovered = false;
+//     }
+// }
+
+function handleCircleHover(event) {
+    // draws starting hover circle, then renders stimuli when hover condition is met
+
+    // Get the canvas boundaries
+    const rect = canvas.getBoundingClientRect();
+
+    // Calculate the current mouse position relative to the canvas
+    const mouseX = event.clientX - rect.left;
+    const mouseY = event.clientY - rect.top;
+    
+    // Define the center of the circle and its radius
+    // The radius is twice the size of the displayed circle for a more forgiving hover detection area
+    const circleCenterX = canvas.width / 2;
+    const circleCenterY = canvas.height / 2;
+    const circleRadius = CONFIG.display.HINT_CIRCLE_RADIUS * 2; 
+
+    // Calculate the distance between the mouse pointer and the center of the circle
+    const distanceFromCenter = Math.sqrt((mouseX - circleCenterX) ** 2 + (mouseY - circleCenterY) ** 2);
+    
+    // Check if the distance calculated is less than or equal to the circle's radius
+    if (distanceFromCenter <= circleRadius) {
+        // If it is the first time the mouse has hovered over the circle during this check
+        if (!hintHovered) {
+            hintHovered = true;
+            hoverStartTime = new Date().getTime(); // Record the hover start time
+        } 
+        // If the mouse has been hovering over the circle
+        else {
+            const currentTime = new Date().getTime();
+            
+            // Calculate the total hover time
+            const elapsed = currentTime - hoverStartTime;    
+            
+            // If the hover time exceeds the specified duration, render stimuli
+            if (elapsed >= CONFIG.display.HOVER_DURATION) {
+                canvas.removeEventListener('mousemove', handleCircleHover);
+                
+                ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+                
+                // **Restore foveation mask**
+                document.getElementById("foveation-mask").style.display = "block";
+                document.body.style.backgroundColor = ""; // Reset background color
+
+                // **Hide the cursor again when trial starts**
+                document.getElementById("box-container").style.cursor = "none"; 
+
+                setTimeout(() => {
+                    renderStimuli(currentTrial); // Call the function to render stimuli
+                }, CONFIG.display.DELAY_BEFORE_TRIAL);
+            }
         }
-    }, CONFIG.display.HOVER_DURATION);
+    } 
+    // If the mouse is outside the circle, reset the hovered state
+    else {
+        hintHovered = false;
+    }
 }
 
 // ======================
 // Start and End Trials
 // ======================
 
-function startTask() {
-    // Hide the hover circle
-    document.getElementById("centerHintContainer").style.display = "none";
+function startTrial() {
     
-    trialActive = true; // Clicks and presses are allowed
     clickedLocations = [];
     mouseTrajectory = [];
     
@@ -314,14 +436,9 @@ function startTask() {
 
     console.log("currentTrial:", currentTrial);
     currentTrial.stimuli.forEach(stim => stim.clickCount = 0);
-    
-    // **Render stimuli first**
-    renderStimuli(currentTrial);
 
-    // **Ensure foveation mask is drawn last**
-    requestAnimationFrame(() => {
-        drawFoveationMask(cursorX, cursorY);
-    });
+    // draw center hint
+    drawCenterHint();
 }
 
 function clearDisplay() {
@@ -366,6 +483,8 @@ function endTrial() {
     lastHoveredStimIndex = null;
     entryTime = null;
     trialActive = false; // Ignore any clicks or presses till next trial
+    hintHovered = false;
+    hintStartTime = null;
 
     // Log data
     logCounter++;
@@ -373,11 +492,8 @@ function endTrial() {
     spacePress = false;
     previousTrialCorrect = trialCorrect;
     
-    // Don't start trial without hover circle
-    drawCenterHint();
     setTimeout(() => {
-        document.getElementById("centerHintCircle").addEventListener("mouseenter", handleCircleHover);
-        // startBlock();
+        startBlock();
     }, CONFIG.display.MIN_FEEDBACK_DURATION);
 }
 
@@ -406,6 +522,8 @@ function drawL(x, y, color, rotation, offset) {
 }
 
 function renderStimuli(currentTrial) {
+    trialActive = true; // Clicks and presses are allowed
+
     if (!currentTrial) {
         console.error("currentTrial is not initialized");
         return;
@@ -460,24 +578,6 @@ let dwellDuration = null;
     // Confusing name, but it gets used to calculate stimuliDwellTime
 let stimuliDwellTime = [];
 const tolerance = 30;
-
-// function updateCursorPosition(event) {
-//     const rect = boxContainer.getBoundingClientRect();
-//     cursorX = event.clientX - rect.left; // relative to boxContainer
-//     cursorY = event.clientY - rect.top;  // relative to boxContainer
-
-//     mouseTrajectory.push({
-//         x: cursorX,
-//         y: cursorY,
-//         time: Date.now(),
-//     });
-
-//     trackDwellTime(cursorX, cursorY, currentTime);
-
-//     // Clear the canvas to remove the previous ring
-//     ctx.clearRect(0, 0, canvas.width, canvas.height);
-//     drawFoveationMask(cursorX, cursorY);
-// }
 
 function updateCursorPosition(event) {
     const rect = boxContainer.getBoundingClientRect();
@@ -556,29 +656,6 @@ function trackDwellTime(cursorX, cursorY) {
 // Foveation Mask
 // =================
 
-// function drawFoveationMask(cursorX, cursorY) {    
-//     // Global mask layer
-//     maskCtx.clearRect(0, 0, boxContainer.offsetWidth, 
-//         boxContainer.offsetHeight); // Clear previous mask
-//     maskCtx.fillStyle = "#e5e7e9";  // gray: #b7b7b7; light gray: #e5e7e9
-//     maskCtx.globalAlpha = 1.0;
-//     maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);  
-    
-//     // Local mask layer
-//     maskCtx.fillStyle = "#000000";
-//     maskCtx.font = "14px Arial";
-//     maskCtx.textAlign = "center";
-//     maskCtx.textBaseline = "middle";
-//     stimulusCoordinates.forEach(({ x, y, reducedSize}) => {
-//         const centerX = x + reducedSize / 2;
-//         const centerY = y + reducedSize / 2;
-//         maskCtx.fillText("X", centerX, centerY);
-//     });
-
-//     eraseFoveation(cursorX, cursorY, maskCtx);
-//     maskCtx.restore();
-// }
-
 function drawFoveationMask(cursorX, cursorY) {    
     // **Global mask layer (fully opaque)**
     maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height); 
@@ -594,6 +671,16 @@ function drawFoveationMask(cursorX, cursorY) {
     stimulusCoordinates.forEach(({ x, y }) => {
         maskCtx.fillText("+", x, y);
     });
+
+    // **Erase foveation region at cursor location**
+    eraseFoveation(cursorX, cursorY, maskCtx);
+}
+
+function drawFoveationMaskWithoutLocal(cursorX, cursorY) {    
+    // **Global mask layer (fully opaque)**
+    maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height); 
+    maskCtx.fillStyle = "rgb(229, 231, 233)";  // Light gray with no transparency
+    maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);  
 
     // **Erase foveation region at cursor location**
     eraseFoveation(cursorX, cursorY, maskCtx);
@@ -631,23 +718,9 @@ function showTask() {
     // Show the start button
     startButton.style.display = "block";
 
-    // Refresh canvas rendering
-    // let canvas = document.getElementById("canvas");
-    // if (canvas) {
-    //     let ctx = canvas.getContext("2d");
-    //     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    //     ctx.fillStyle = "white";
-    //     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    // }
-
-    // Ensure cursor event listeners are reattached
-    // attachCursorListeners();
-
     hideAllInstructionDivs();
 
 }
-
-
 
 function startBlock() {
     clearDisplay();
@@ -656,14 +729,12 @@ function startBlock() {
         if (iTrial < expStruct[iBlock].trials.length) {
             messageBox.style.display = "none"; // Hide message
             startBtn.style.display = "none"; // Hide start button
-            startTask();  // Start the trial
+            startTrial();  // Start the trial
             iTrial++;  // Increment trial counter
         } else {
             iBlock++;  // Increment block counter
             iTrial = 0;  // Reset trial counter for the new block
-            drawCenterHint();
             previousTrialCorrect = null;
-            canvas.addEventListener("mousemove", handleCircleHoverEndBlock);
 
             let message = "";
             if (iBlock < expStruct.length) {
@@ -702,126 +773,4 @@ function startBlock() {
             };
         }
     }
-}
-
-function handleCircleHoverEndBlock(event) {
-    // Get the canvas boundaries
-    const rect = canvas.getBoundingClientRect();
-
-    // Calculate the current mouse position relative to the canvas
-    const mouseX = event.clientX - rect.left;
-    const mouseY = event.clientY - rect.top;
-    
-    // Define the center of the circle and its radius
-    const circleCenterX = canvas.width / 2;
-    const circleCenterY = canvas.height / 2;
-    const circleRadius = CONFIG.display.HINT_CIRCLE_RADIUS * 2; 
-
-    // Calculate the distance between the mouse pointer and the center of the circle
-    const distanceFromCenter = Math.sqrt((mouseX - circleCenterX) ** 2 + (mouseY - circleCenterY) ** 2);
-    
-    // Check if the distance calculated is less than or equal to the circle's radius
-    if (distanceFromCenter <= circleRadius) {
-        // If it is the first time the mouse has hovered over the circle during this check
-        if (!hintHovered) {
-            hintHovered = true;
-            hoverStartTime = new Date().getTime(); // Record the hover start time
-        } 
-        // If the mouse has been hovering over the circle
-        else {
-            const currentTime = new Date().getTime();
-            
-            // Calculate the total hover time
-            const elapsed = currentTime - hoverStartTime;    
-            
-            // If the hover time exceeds the specified duration, show the end-of-block message
-            if (elapsed >= CONFIG.display.HOVER_DURATION) {
-                canvas.removeEventListener('mousemove', handleCircleHoverEndBlock);
-                ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
-                
-                // Show the end-of-block message
-                showEndBlockMessage();
-            }
-        }
-    } 
-    // If the mouse is outside the circle, reset the hovered state
-    else {
-        hintHovered = false;
-    }
-}
-
-function showEndBlockMessage() {
-    let message = ``;
-    console.log("iBlock:", iBlock, "expStruct.length:", expStruct.length);
-    if (iBlock < expStruct.length) {
-        if (expStruct[iBlock - 1].isPractice) { // If previous block was practice
-            message += `Practice block ${iBlock} out of ${CONFIG.experimentDesign.N_PRACTICE_BLOCKS} completed!`;
-            if (expStruct[iBlock].isPractice == 0) {
-                message += `<br><br><strong style="color:red;">IMPORTANT: The main experiment starts in the next block.</strong>`;
-                // message += `<br><strong style="color:red;">You will not receive feedback for your clicks anymore.</strong><br><br>`;
-            }
-            message += `<br>Blocks left: ${expStruct.length - iBlock}.`;
-            message += `<br>Press any key to continue.`;
-        } else {
-            message += `You have completed experiment block ${iBlock - CONFIG.experimentDesign.N_PRACTICE_BLOCKS} out of ${CONFIG.experimentDesign.N_BLOCKS}.`;
-            message += `<br><br>Blocks left: ${expStruct.length - iBlock}.`;
-            message += `<br>Press any key to continue.`;
-        }
-    } else {
-        message += `<br>No more blocks left!`;
-        message += `<br>Press the next button to continue.`;
-
-        expTrialsEndTime = Date.now();
-        expTrialsDuration = expTrialsEndTime - expTrialsStartTime;
-        data.expTrialsDuration = expTrialsDuration;
-        console.log("expTrialsDuration logged");
-
-        // Show the demographics button
-        show_startDemosButton();
-        // sendData(data);  // Sending data after demos submission instead
-    }
-
-    // Update the div content
-    const messageDiv = document.getElementById("message-box");
-    messageDiv.innerHTML = message;
-    messageDiv.style.display = "block"; // Show the message
-
-    // Listen for a keypress event to continue
-    function onKeypress() {
-        messageDiv.style.display = "none"; // Hide message on keypress
-        window.removeEventListener("keypress", onKeypress);
-        startBlock(); // Start the next block
-    }
-
-    window.addEventListener("keypress", onKeypress);
-}
-
-function startTrial() {
-    // Initializes trial
-    if (!expStruct[iBlock].isPractice) {
-        // clear feedback for experiment blocks
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        if (!firstExperimentBlockStarted) {
-            let expTrialsStartTime = Date.now(); // time in milliseconds for ease of duration calculation
-            data.expTrialsStartTime = expTrialsStartTime;
-            firstExperimentBlockStarted = true;
-        }
-    }
-
-    currentTrial = expStruct[iBlock].trials[iTrial]; 
-    
-    // Reset trial flags
-    hasClicked = false; // Allow clicking for the new trial
-    trialEnded = false;
-    timeoutReached = false; // Reset the timeout flag at the start of each trial
-    clearTimeout(searchTimer);
-    prematurePresses = 0; // Reset premature spacebar press count
-    screenSizeWarningTriggered = false; // Reset screensize warning flag
-    clickedLocations = [];
-    mouseTrajectory = [];
-
-    // Draw the hover circle and wait for hover condition to be met before rendering stimuli
-    drawCenterHint();
-    canvas.addEventListener('mousemove', handleCircleHover);
 }
