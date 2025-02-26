@@ -31,6 +31,7 @@ let trialCounter = 0;
 let logCounter = 0;
 let trialCorrect = false;
 let previousTrialCorrect = null;
+let previousTrialSize = null;
 let experimentStartTime = null;
 let trialStartTime = [];
 let isOutlierRT = null;
@@ -159,6 +160,7 @@ function logTrialData() {
         missCount,
         trialCorrect,
         previousTrialCorrect,
+        previousTrialSize,
         stimuli: stimuliJSON,
         allClicks: allClicksJSON,
         mouseTrajectory: mouseTrajectoryJSON,
@@ -450,6 +452,7 @@ function endTrial() {
     const trialData = logTrialData();
     spacePress = false;
     previousTrialCorrect = trialCorrect;
+    previousTrialSize = currentTrial.setSize;
     
     setTimeout(() => {
         startBlock();
