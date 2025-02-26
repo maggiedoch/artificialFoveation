@@ -47,8 +47,10 @@ let reducedSize = CONFIG.stimuli.SQUARE_SIZE * CONFIG.stimuli.REDUCTION_FACTOR /
 let trialActive = null;
 
 // Exp struct variables
-const preload = 0;
+const preload = 1;
 let expStruct;
+const expStructId = Math.floor(Math.random() * 240) + 1; // Randomly generate an ID between 1 and 240
+
 
 // Ensure foveation mask runs on page load
 document.addEventListener("DOMContentLoaded", function () {
@@ -81,7 +83,7 @@ function updateDisplayWithTrialInfo() {
 }
 
 async function loadExpStruct(expStructId) {
-    const filePath = `./expStructs_MCMC/expStruct_version${expStructId}.json`; // Use expStructId to construct the file path
+    const filePath = `./Ts-and-Ls_with_mask_ExpStructs_MCMC/expStruct_version${expStructId}.json`; // Use expStructId to construct the file path
 
     try {
         const response = await fetch(filePath);
