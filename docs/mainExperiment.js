@@ -576,8 +576,8 @@ function startTrial() {
         console.log("Experiment start time:", experimentStartTime);
     }
 
-    trialStartTime = Date.now();
-    console.log("Trial #", iTrial, "start time:", trialStartTime);
+    hoverStartTime = Date.now();
+    console.log("Trial #", iTrial, "hover start time:", hoverStartTime);
 
     // Load the trial from expStruct
     currentTrial = expStruct[iBlock].trials[iTrial];
@@ -675,6 +675,9 @@ function drawL(x, y, color, rotation, offset) {
 }
 
 function renderStimuli(currentTrial) {
+    trialStartTime = Date.now();
+    console.log("Trial #", iTrial, "start time:", trialStartTime);
+
     trialActive = true; // Clicks and presses are allowed
 
     if (!currentTrial) {
@@ -874,8 +877,8 @@ function startBlock() {
         if (iTrial < expStruct[iBlock].trials.length) {
             messageBox.style.display = "none"; // Hide message
             startBtn.style.display = "none"; // Hide start button
-            startTrial();  // Start the trial
             iTrial++;  // Increment trial counter
+            startTrial();  // Start the trial
         } else {
             // Move to the next block
             iBlock++;  
