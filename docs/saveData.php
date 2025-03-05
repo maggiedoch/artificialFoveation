@@ -22,7 +22,7 @@ $experimentName = isset($data['experimentName']) ? $data['experimentName'] : 'no
 $version = isset($data['version']) ? $data['version'] : 'no_version';
 $timestamp = (new DateTime())->format('Y-m-d_H-i-s'); 
 
-$dirPath = "/var/www/html/data/{$experimentName}_{$version}";
+$dirPath = "/var/www/html/data_8d7b5c2a/{$experimentName}_{$version}";
 if (!is_dir($dirPath)) {
     if (!mkdir($dirPath, 0777, true)) { // 0777 ensures you have writing permission
         // Directory creation failed, log error or take action

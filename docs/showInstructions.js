@@ -87,12 +87,24 @@ function show_startDemosButton() {
 }
 
 function showDemographicForm() {
-    // Hide the canvas
+    // Hide the canvas and foveation mask
     document.getElementById('canvas').style.display = 'none';
+    document.getElementById('foveation-mask').style.display = 'none';
+
+    // Hide the stimulus container
+    document.getElementById('box-container').style.display = 'none';
+
+    // Hide the feedback and message boxes
+    document.getElementById('feedback-box').style.display = 'none';
+    document.getElementById('message-box').style.display = 'none';
+
+    // Hide cursor position tracker
+    document.getElementById('cursor-position').style.display = 'none';
 
     // Show the demographics form
     document.getElementById('demoInfo').style.display = 'block';
 
-    // Hide the "next" button
+    // Hide the "NEXT" button
     document.getElementById('startDemosButton').style.display = 'none';
 }
+

@@ -208,7 +208,165 @@
         </div>
     </div>
 
+    <!-------------------------------------------->
+    <!-- Start Buttons -->
+    <!-------------------------------------------->
+
     <button id="start-btn">Start Task</button>
+    <input type="submit" id="startDemosButton" class="buttonsDiv" value="NEXT" style="width: 200px;" onclick="showDemographicForm()"/>
+
+    <!-------------------------------------------->
+    <!-- DEMOGRAPHICS SURVEY -->
+    <!-------------------------------------------->
+    <div id="demoInfo" class="demoInfoDiv">
+        <p>Great job! You are almost done! Before completing the task, we have a few questions for you to answer about your demographic characteristics. Specifically, we are asking about gender identity, age, and race/ethnicity in order to understand how your performance may differ based on these characteristics.</p> 
+        <p style="font-weight: normal"> <i>When you are done, click the 'SUBMIT' button at the bottom of the page.</i></p>
+        
+        <form>
+            <!-- Gender Section -->
+            <fieldset>
+                <legend>Gender Identity</legend>
+                <label>
+                    <strong>Please select one option from the drop-down menu:</strong>
+                    <select id="genderList">
+                    <option>---Choose an option---</option>
+                    <option>Woman</option>
+                    <option>Man</option> 
+                    <option>Transgender Woman</option>
+                    <option>Transgender Man</option>
+                    <option>Non-binary, gender fluid, or gender non-conforming</option> 
+                    <option>None of these describe me</option>
+                    <option>Prefer not to respond</option>
+                    </select>
+                </label>
+            </fieldset>
+
+
+            <!-- Age Section -->
+            <fieldset>
+                <legend>Year of Birth</legend>
+                <label>
+                    <strong>Please select one option from the drop-down menu:</strong>
+                    <select id="ageList">
+                    <option>---Choose a birth year---</option>
+                    <!-- After 2005 -->
+                    <option>After 2005</option> 
+                    <!-- 2000s -->
+                    <option>2005</option> <option>2004</option> <option>2003</option>  <option>2002</option>  <option>2001</option>  <option>2000</option>
+                    <!-- 1990s -->
+                    <option>1999</option> <option>1998</option>  <option>1997</option>  <option>1996</option>  <option>1995</option>  <option>1994</option>  <option>1993</option>  <option>1992</option>  <option>1991</option>  <option>1990</option> 
+                    <!-- 1980s -->
+                    <option>1989</option> <option>1988</option>  <option>1987</option>  <option>1986</option>  <option>1985</option>  <option>1984</option>  <option>1983</option>  <option>1982</option>  <option>1981</option>  <option>1980</option> 
+                    <!-- 1970s -->
+                    <option>1979</option> <option>1978</option>  <option>1977</option>  <option>1976</option>  <option>1975</option>  <option>1974</option>  <option>1973</option>  <option>1972</option>  <option>1971</option>  <option>1970</option> 
+                    <!-- 1960s -->
+                    <option>1969</option> <option>1968</option>  <option>1967</option>  <option>1966</option>  <option>1965</option>  <option>1964</option>  <option>1963</option>  <option>1962</option>  <option>1961</option>  <option>1960</option> 
+                    <!-- 1950s -->
+                    <option>1959</option> <option>1958</option>  <option>1957</option>  <option>1956</option>  <option>1955</option>  <option>1954</option>  <option>1953</option>  <option>1952</option>  <option>1951</option>  <option>1950</option> 
+                    <!-- 1940s -->
+                    <option>1949</option> <option>1948</option>  <option>1947</option>  <option>1946</option>  <option>1945</option>  <option>1944</option>  <option>1943</option>  <option>1942</option>  <option>1941</option>  <option>1940</option> 
+                    <!-- 1930s -->
+                    <option>1939</option> <option>1938</option>  <option>1937</option>  <option>1936</option>  <option>1935</option>  <option>1934</option>  <option>1933</option>  <option>1932</option>  <option>1931</option>  <option>1930</option> 
+                    <!-- 1920s -->
+                    <option>1929</option> <option>1928</option>  <option>1927</option>  <option>1926</option>  <option>1925</option>  <option>1924</option>  <option>1923</option>  <option>1922</option>  <option>1921</option>  <option>1920</option> 
+                    <!-- before 1920 -->
+                    <option>Before 1920</option>  
+                    <!-- Prefer not to respond -->
+                    <option>Prefer not to respond</option>
+                    </select>
+                </label>
+            </fieldset>
+
+            <!-- RACE & ETHNICITY -->
+            <fieldset>
+                <legend>Race and Ethnicity</legend>
+                <div>
+                    <strong>Race (select all that apply):</strong>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="americanIndian" name="race" value="American Indian or Alaska Native">
+                        <label for="americanIndian">American Indian or Alaska Native</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="asian" name="race" value="Asian">
+                        <label for="asian">Asian</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="blackAfricanAmerican" name="race" value="Black or African American">
+                        <label for="asian">Black or African American</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="hispanicLatinoRace" name="race" value="Hispanic or Latino">
+                        <label for="hispanicLatinoRace">Hispanic or Latino</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="nativeHawaiian" name="race" value="Native Hawaiian or Other Pacific Islander">
+                        <label for="nativeHawaiian">Native Hawaiian or Other Pacific Islander</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="white" name="race" value="White">
+                        <label for="white">White</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="otherRace" name="race" value="Other">
+                        <label for="otherRace">Other</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="preferNotToSayRace" name="race" value="Prefer not to say">
+                        <label for="preferNotToSayRace">Prefer not to say</label>
+                    </div>
+                </div>
+                
+                <div>
+                    <br>
+                    <label for="ethnicity"><strong>Ethnicity:</strong></label>
+                    <select id="ethnicity" name="ethnicity">
+                        <option value="">---Choose an option---</option>
+                        <option value="hispanicLatino">Hispanic or Latino</option>
+                        <option value="notHispanicLatino">Not Hispanic or Latino</option>
+                        <option value="preferNotToSay">Prefer not to say</option>
+                    </select>
+                </div>
+            </fieldset>
+
+            <!-- DEVICE INFORMATION -->
+            <fieldset>
+                <legend>Device Information</legend>
+                What device did you use to select/click on targets during the task?
+                <p><i>(Please note that this is referring to target selection and not to the use of the Spacebar to submit responses)</i></p>
+
+                <div>
+                    <label for="deviceList"><strong>Please select one option from the drop-down menu:</strong></label>
+                    <select id="deviceList">
+                        <option value="">---Choose an option---</option>
+                        <option value="mouse">Mouse</option>
+                        <option value="builtInTrackpad">Built-In Trackpad</option>
+                        <option value="externalTrackpad">External Trackpad</option>
+                        <option value="touchScreen">Touch Screen</option>
+                        <option value="bluetoothSmartPen">Bluetooth Smart Pen or Stylus</option>
+                        <option value="builtInTrackball">Built-In Trackball</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+            </fieldset>
+
+            <!-- General Feedback -->
+            <fieldset>
+                <legend>General Feedback</legend>
+                <label for="feedback"><strong>This task is still in development and we value your feedback:</strong></label>
+                <p>Please share any suggestions you have on how we can improve your experience as a participant.</p>
+                <textarea id="feedback" name="feedback" rows="5" cols="70" placeholder="Enter your feedback here..."></textarea>
+            </fieldset>
+
+            <!-- SUBMIT BUTTON -->
+            <div style="text-align: center;">
+                <input type="submit" id="button_submitDemo" class="buttonsDiv" value="SUBMIT"/>
+            </div>
+        </form>
+    </div>
+
+    <!-------------------------------------------->
+    <!-- Task Components -->
+    <!-------------------------------------------->
 
     <!-- Container for stimuli-->
     <div id="box-container">

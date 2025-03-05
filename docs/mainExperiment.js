@@ -2,7 +2,7 @@
 // Global Initializations
 // =========================
 
-const subjectID = Math.floor(Math.random() * 1000000); // Randomly generate a subject ID
+const subjectId = Math.floor(1000000000 + Math.random() * 9000000000); // random subjectId;
 const experimentName = "Ts-and-Ls_with_mask";
 const version = "pilot1";
 const startBtn = document.getElementById("start-btn");
@@ -26,6 +26,17 @@ maskCanvas.style.left = "0px";
 maskCanvas.style.top = "0px";
 maskCanvas.style.zIndex = "2"; // Ensure the mask is on top
 
+let data = {}; // all data
+let trialDataLog = [];
+let startTime; 
+let startDate; 
+let experimentStartTime = null;
+
+// Subject and Experiment Identifiers
+let workerId;
+let assignmentId;
+let hitId;
+
 let clickedLocations = [];
 let clickedStimulus = null;
 let mouseTrajectory = [];
@@ -34,7 +45,7 @@ let trialCounter = 0;
 let logCounter = 0;
 let trialCorrect = false;
 let previousTrialCorrect = null;
-let experimentStartTime = null;
+let previousTrialSize = null;
 let trialStartTime = [];
 let isOutlierRT = null;
 let stimulusCoordinates = [];
@@ -55,35 +66,41 @@ let expStruct;
 const expStructId = Math.floor(Math.random() * 240) + 1; // Randomly generate an ID between 1 and 240
 
 
-// Ensure foveation mask runs on page load
 document.addEventListener("DOMContentLoaded", function () {
+    // Initialize foveation mask
     drawFoveationMask(cursorX, cursorY);
+
+    // Start time and duration
+    const start = new Date();
+    const month = start.getMonth() + 1;  // Convert from 0-based index
+    const pad = num => num.toString().padStart(2, '0'); // Ensure two-digit formatting
+    startTime = pad(start.getHours()) + "-" + pad(start.getMinutes()) + "-" + pad(start.getSeconds());
+    startDate = pad(month) + "-" + pad(start.getDate()) + "-" + start.getFullYear();
+    experimentStartTime = Date.now(); // Store timestamp globally
+    console.log(startTime);
+
+    // Subject and Experiment Identifiers
+    workerId = getURLParameter('PROLIFIC_PID') || null;
+    assignmentId = getURLParameter('SURVEY_CODE') || null; //sona_id
+    hitId = getURLParameter('SESSION_ID') || null;
+
+    // Load experiment structure
+    if (preload === 0) {
+        expStruct = makeExpStruct();
+        initializeData();
+    } else {
+        loadExpStruct(expStructId)
+            .then(loadedExpStruct => {
+                expStruct = loadedExpStruct;
+                initializeData(); // Initialize data **after** structure is loaded
+                console.log(data);
+                console.log("condition load success");
+            })
+            .catch(error => {
+                console.error("Error:", error);
+            });
+    }
 });
-
-// ===============
-// Loading Experiment Structure
-// ===============
-if (preload === 0) {
-    expStruct = makeExpStruct();
-    //initializeData();
-    updateDisplayWithTrialInfo();
-} else {
-    loadExpStruct(expStructId)
-        .then(loadedExpStruct => {
-            expStruct = loadedExpStruct;
-            // Initialize the data object after expStruct is loaded
-            //initializeData();
-            updateDisplayWithTrialInfo();
-            console.log("condition load success");
-        })
-        .catch(error => {
-            console.error("Error:", error);
-        });
-}
-
-function updateDisplayWithTrialInfo() {
-    const totalTrials = expStruct.reduce((total, block) => total + block.trials.length, 0);
-}
 
 async function loadExpStruct(expStructId) {
     const filePath = `./Ts-and-Ls_with_mask_ExpStructs_MCMC/expStruct_version${expStructId}.json`; // Use expStructId to construct the file path
@@ -100,10 +117,35 @@ async function loadExpStruct(expStructId) {
     }
 }
 
+// ===============
+// Misc
+// ===============
+function getURLParameter(name) {
+    // for getting MTurk URL elements
+    return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search)||[,""])[1].replace(/\+/g, '%20'))||null;
+}
 
 // ===============
 // Data Logging
 // ===============
+function initializeData() {
+    data = {
+        subjectId: subjectId,
+        startDate: startDate,
+        startTime: startTime,
+        experimentStartTime: experimentStartTime,
+        experimentName: experimentName,
+        version: version,
+        assignmentId: assignmentId,
+        workerId: workerId,
+        hitId: hitId,
+        demographics: {}, //fill later
+        config: CONFIG,
+        expStructId: expStructId,
+        expStruct: expStruct,
+        trialDataLog: trialDataLog
+    };
+}
 
 function generateTrialID() {
     trialCounter ++;
@@ -162,6 +204,7 @@ function logTrialData() {
         missCount,
         trialCorrect,
         previousTrialCorrect,
+        previousTrialSize,
         stimuli: stimuliJSON,
         allClicks: allClicksJSON,
         mouseTrajectory: mouseTrajectoryJSON,
@@ -173,13 +216,138 @@ function logTrialData() {
 }
 
 // ===============
+// Demographics 
+// ===============
+
+// Call this to submit data when the demographics form is completed
+document.querySelector('#demoInfo form').addEventListener('submit', function (event) {
+    event.preventDefault(); // Prevent the default form submission
+    
+    // Clear previous error messages
+    const previousErrors = document.querySelectorAll('.error-message');
+    previousErrors.forEach(error => error.remove());
+    
+    // Initialize a variable to keep track of the form validity
+    let formValid = true;
+    
+    // Validate Gender Section
+    const genderSelect = this.querySelector('#genderList');
+    if (genderSelect.value === '' || genderSelect.value.startsWith('---Choose')) {
+        formValid = false;
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'error-message';
+        errorMessage.style.color = 'red';
+        errorMessage.textContent = 'Please select a gender.';
+        genderSelect.parentNode.appendChild(errorMessage);
+    }
+    
+    // Validate Age Section
+    const ageSelect = this.querySelector('#ageList');
+    if (ageSelect.value === '' || ageSelect.value.startsWith('---Choose')) {
+        formValid = false;
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'error-message';
+        errorMessage.style.color = 'red';
+        errorMessage.textContent = 'Please select a birth year.';
+        ageSelect.parentNode.appendChild(errorMessage);
+    }
+    
+    // Validate Race Section
+    const checkboxGroup = this.querySelectorAll('input[type="checkbox"][name="race"]');
+    const checkedCheckboxes = Array.from(checkboxGroup).filter(checkbox => checkbox.checked);
+    if (checkedCheckboxes.length === 0) {
+        formValid = false;
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'error-message';
+        errorMessage.style.color = 'red';
+        errorMessage.textContent = 'Please select at least one race.';
+        checkboxGroup[0].parentNode.appendChild(errorMessage);
+    }
+
+    // Validate Ethnicity Section
+    const ethnicitySelect = this.querySelector('#ethnicity');
+    if (ethnicitySelect.value === '' || ethnicitySelect.value.startsWith('---Choose')) {
+        formValid = false;
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'error-message';
+        errorMessage.style.color = 'red';
+        errorMessage.textContent = 'Please select an ethnicity.';
+        ethnicitySelect.parentNode.appendChild(errorMessage);
+    }
+    
+    // Validate Device Information Section
+    const deviceSelect = this.querySelector('#deviceList');
+    if (deviceSelect.value === '' || deviceSelect.value.startsWith('---Choose')) {
+        formValid = false;
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'error-message';
+        errorMessage.style.color = 'red';
+        errorMessage.textContent = 'Please select a device.';
+        deviceSelect.parentNode.appendChild(errorMessage);
+    }
+    
+    // If form is not valid, return early
+    if (!formValid) {
+        return;
+    }
+    
+    // If form is valid, collect demographic data and send it
+    const experimentEndTime = Date.now();
+    data.experimentDuration = experimentEndTime - experimentStartTime;
+    collectDemographicData();
+    sendData(data);
+});
+
+function collectDemographicData() {
+
+    // Collecting gender
+    var genderElement = document.getElementById('genderList');
+    var gender = genderElement.value;
+
+    // Collecting age
+    var ageElement = document.getElementById('ageList');
+    var age = ageElement.value;
+
+    // Collecting race
+    var raceElements = document.getElementsByName('race');
+    var races = [];
+    for (var i = 0; i < raceElements.length; i++) {
+        if (raceElements[i].checked) {
+            races.push(raceElements[i].value);
+        }
+    }
+
+    // Collecting ethnicity
+    var ethnicityElement = document.getElementById('ethnicity');
+    var ethnicity = ethnicityElement.value;
+
+    // Collecting device information
+    var deviceElement = document.getElementById('deviceList');
+    var device = deviceElement.value;
+
+    // Collecting general feedback
+    var feedbackElement = document.getElementById('feedback');
+    var feedback = feedbackElement.value; // Retrieve the feedback from the textarea
+
+    // Adding the collected information to the data object
+    data.demographics = {
+        gender: gender,
+        yearOfBirth: age,
+        race: races,
+        ethnicity: ethnicity,
+        device: device,
+        feedback: feedback
+    };
+}
+
+// ===============
 // Calling sendData.php to upload data to server
 // ===============
 
 // Routing to prolific submission page
 function sendData(data) {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', 'http://54.224.65.24/experiments/Ts-and-Ls_with_mask/saveData.php', true);
+    xhr.open('POST', 'http://52.0.147.87/experiments/Ts_and_Ls_with_mask/docs/saveData.php', true);
     xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4) {
@@ -188,7 +356,7 @@ function sendData(data) {
 
             // Log a message indicating success or failure
             console.log("Data sent response: " + responseStatus);
-            window.location.href = "" // replace with appropriate redirect url
+            window.location.href = "https://gwu.sona-systems.com/webstudy_credit.aspx?experiment_id=1213&credit_token=d1c1a81560774ef289dc11abf8dd420d&survey_code="+assignmentId // replace with appropriate redirect url
         }
     };
     xhr.send(JSON.stringify(data));
@@ -472,9 +640,10 @@ function endTrial() {
 
     // Log data
     logCounter++;
-    const trialData = logTrialData();
+    data.trialDataLog.push(logTrialData());
     spacePress = false;
     previousTrialCorrect = trialCorrect;
+    previousTrialSize = currentTrial.setSize;
     
     setTimeout(() => {
         startBlock();
@@ -527,6 +696,7 @@ function renderStimuli(currentTrial) {
     }
 
     for (let stim of currentTrial.stimuli) {
+        const stimIndex = stim.stimIndex;
         const isTarget = stim.targetCond === 1;
         const x = stim.xpos; // Use preloaded xpos
         const y = stim.ypos; // Use preloaded ypos
@@ -541,7 +711,7 @@ function renderStimuli(currentTrial) {
         }
 
         // Store stimulus coordinates for foveation mask
-        stimulusCoordinates.push({ x, y, isTarget });
+        stimulusCoordinates.push({ stimIndex, x, y, isTarget });
     }
 
     drawFoveationMask(cursorX, cursorY); // Ensure the mask updates
@@ -699,6 +869,7 @@ function showTask() {
 function startBlock() {
     clearDisplay();
     const messageBox = document.getElementById("message-box");
+    
     if (iBlock < expStruct.length) {
         if (iTrial < expStruct[iBlock].trials.length) {
             messageBox.style.display = "none"; // Hide message
@@ -706,46 +877,45 @@ function startBlock() {
             startTrial();  // Start the trial
             iTrial++;  // Increment trial counter
         } else {
-            iBlock++;  // Increment block counter
-            iTrial = 0;  // Reset trial counter for the new block
+            // Move to the next block
+            iBlock++;  
+            iTrial = 0;  
             previousTrialCorrect = null;
 
-            let message = "";
             if (iBlock < expStruct.length) {
-                if (expStruct[iBlock - 1].isPractice) {
-                    message = `Practice block ${iBlock} out of ${CONFIG.experimentDesign.N_PRACTICE_BLOCKS} completed!`;
-                    if (expStruct[iBlock].isPractice == 0) {
-                        message += `<br><br><b>IMPORTANT:</b> The main experiment starts in the next block.<br>`;
-                    }
-                    message += `<br>Blocks left: ${expStruct.length - iBlock}.`;
-                } else {
-                    message = `You have completed experiment block ${iBlock - CONFIG.experimentDesign.N_PRACTICE_BLOCKS} out of ${CONFIG.experimentDesign.N_BLOCKS}`;
-                    message += `<br>Blocks left: ${expStruct.length - iBlock}.`;
+                // Show block transition message
+                let message = expStruct[iBlock - 1].isPractice
+                    ? `Practice block ${iBlock} out of ${CONFIG.experimentDesign.N_PRACTICE_BLOCKS} completed!`
+                    : `You have completed experiment block ${iBlock - CONFIG.experimentDesign.N_PRACTICE_BLOCKS} out of ${CONFIG.experimentDesign.N_BLOCKS}`;
+
+                if (expStruct[iBlock - 1].isPractice && expStruct[iBlock].isPractice == 0) {
+                    message += `<br><br><b>IMPORTANT:</b> The main experiment starts in the next block.<br>`;
                 }
+
+                message += `<br>Blocks left: ${expStruct.length - iBlock}.`;
                 message += `<br><br>Click the Start Task button to continue.`;
+
+                messageBox.innerHTML = message;
+                messageBox.style.display = "block";
+
+                // Show the start button for the next block
+                startBtn.style.display = "block";
+                startBtn.onclick = function () {
+                    messageBox.style.display = "none";
+                    startBtn.style.display = "none";
+                    startBlock();
+                };
             } else {
-                message = `<br><b>Experiment complete!</b><br>Press the next button to continue.`;
+                // Experiment is complete
+                messageBox.innerHTML = `<br><b>Experiment complete!</b><br>Press the next button to continue.`;
+                messageBox.style.display = "block";
 
-                expTrialsEndTime = Date.now();
-                expTrialsDuration = expTrialsEndTime - experimentStartTime; // previously was expTrialsStartTime
-                // data.expTrialsDuration = expTrialsDuration;
-                console.log("expTrialsDuration logged");
+                // Ensure start button is hidden at the end
+                startBtn.style.display = "none";
 
-                //show_startDemosButton();
-                sendData(trialData);
+                // Show demographic form button instead
+                show_startDemosButton();
             }
-
-            // Display message in message box
-            messageBox.innerHTML = message;
-            messageBox.style.display = "block";
-
-            // Show start button for user to continue
-            startBtn.style.display = "block";
-            startBtn.onclick = function () {
-                messageBox.style.display = "none"; // Hide message
-                startBtn.style.display = "none"; // Hide button
-                startBlock();
-            };
         }
     }
 }
