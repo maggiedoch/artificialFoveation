@@ -25,7 +25,7 @@ const CONFIG = {
 	experimentDesign:{
 		// num of practice and experiment blocks
 		N_PRACTICE_BLOCKS: 1,
-		N_BLOCKS: 3
+		N_BLOCKS: 4
 	},
 	practiceTrialsConditions: {
 		// total num of trials in each condition across all practice blocks
