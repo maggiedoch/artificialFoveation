@@ -2,6 +2,9 @@
 // Global Initializations
 // =========================
 
+const subjectID = Math.floor(Math.random() * 1000000); // Randomly generate a subject ID
+const experimentName = "Ts-and-Ls_with_mask";
+const version = "pilot1";
 const startBtn = document.getElementById("start-btn");
 const boxContainer = document.getElementById("box-container");
 const feedbackBox = document.getElementById("feedback-box");
@@ -167,6 +170,28 @@ function logTrialData() {
 
     console.log("Trial Data:", trialData);
     return trialData;
+}
+
+// ===============
+// Calling sendData.php to upload data to server
+// ===============
+
+// Routing to prolific submission page
+function sendData(data) {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', 'http://54.224.65.24/experiments/Ts-and-Ls_with_mask/saveData.php', true);
+    xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+            // Check the response text from the PHP script
+            const responseStatus = xhr.responseText;
+
+            // Log a message indicating success or failure
+            console.log("Data sent response: " + responseStatus);
+            window.location.href = "" // replace with appropriate redirect url
+        }
+    };
+    xhr.send(JSON.stringify(data));
 }
 
 // =====================================
@@ -707,6 +732,7 @@ function startBlock() {
                 console.log("expTrialsDuration logged");
 
                 //show_startDemosButton();
+                sendData(trialData);
             }
 
             // Display message in message box
