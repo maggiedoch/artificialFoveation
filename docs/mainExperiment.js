@@ -147,10 +147,10 @@ function initializeData() {
     };
 }
 
-function generateTrialID() {
-    trialCounter ++;
-    return `trial${trialCounter}`;
-}
+// function generateTrialID() {
+    // trialCounter ++;
+    // return `trial${trialCounter}`;
+// }
 
 function logTrialData() {
     const trialID = currentTrial.trialID;
@@ -194,7 +194,6 @@ function logTrialData() {
         logCounter,
         iBlock,
         iTrial,
-        trialID,
         trialType,
         setSize,
         totalSearchTime,
@@ -582,7 +581,7 @@ function startTrial() {
     // Load the trial from expStruct
     currentTrial = expStruct[iBlock].trials[iTrial];
 
-    currentTrial.trialID = generateTrialID();
+    // currentTrial.trialID = generateTrialID();
     trialType = currentTrial.trialType;
     setSize = currentTrial.setSize;
 
