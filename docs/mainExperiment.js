@@ -147,11 +147,6 @@ function initializeData() {
     };
 }
 
-// function generateTrialID() {
-    // trialCounter ++;
-    // return `trial${trialCounter}`;
-// }
-
 function logTrialData() {
     const trialID = currentTrial.trialID;
     const trialType = currentTrial.trialType;
@@ -194,6 +189,7 @@ function logTrialData() {
         logCounter,
         iBlock,
         iTrial,
+        trialID,
         trialType,
         setSize,
         totalSearchTime,
@@ -445,8 +441,8 @@ function handleSpacebarPress(event) {
             trialCorrect = false;
         }
 
-        // console.log("Spacebar pressed. isTargetPresent:", isTargetPresent,
-            // "trialCorrect:", trialCorrect);
+        console.log("Spacebar pressed. trialType:", trialType,
+            "trialCorrect:", trialCorrect);
         showFeedback(trialCorrect);
         endTrial();
     }
@@ -581,7 +577,6 @@ function startTrial() {
     // Load the trial from expStruct
     currentTrial = expStruct[iBlock].trials[iTrial];
 
-    // currentTrial.trialID = generateTrialID();
     trialType = currentTrial.trialType;
     setSize = currentTrial.setSize;
 
@@ -675,7 +670,7 @@ function drawL(x, y, color, rotation, offset) {
 
 function renderStimuli(currentTrial) {
     trialStartTime = Date.now();
-    console.log("Trial #", iTrial, "start time:", trialStartTime);
+    console.log("Start time:", trialStartTime);
 
     trialActive = true; // Clicks and presses are allowed
 
@@ -876,8 +871,8 @@ function startBlock() {
         if (iTrial < expStruct[iBlock].trials.length) {
             messageBox.style.display = "none"; // Hide message
             startBtn.style.display = "none"; // Hide start button
-            iTrial++;  // Increment trial counter
             startTrial();  // Start the trial
+            iTrial++;  // Increment trial counter
         } else {
             // Move to the next block
             iBlock++;  
